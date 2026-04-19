@@ -6,8 +6,21 @@ const last = rest.join(' ');
 ---
 
 <header class="masthead">
-  <div class="mark">{first} <em>{last}</em></div>
-  <div class="meta">personal · portfolio · est. 2026</div>
+  <a href="/" class="mark" aria-label="Home">
+    <svg class="mark-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+      <rect width="64" height="64" rx="10" fill="var(--paper-deep)" />
+      <text
+        x="32"
+        y="46"
+        text-anchor="middle"
+        font-family="'Fraunces', Georgia, serif"
+        font-style="italic"
+        font-weight="400"
+        font-size="44"
+        fill="var(--ink)">M<tspan fill="var(--accent)" dx="-2">i</tspan></text>
+    </svg>
+    <span class="mark-text">{first} <em>{last}</em></span>
+  </a>
   <nav>
     <a href="#about">About</a>
     <a href="#work">Work</a>

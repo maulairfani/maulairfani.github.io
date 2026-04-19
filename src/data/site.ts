@@ -2,7 +2,7 @@ export const site = {
   name: 'Maula Irfani',
   fullName: 'Muhammad Maula Irfani',
   role: 'AI/ML Engineer',
-  location: 'Jakarta / remote',
+  location: 'Jakarta',
   email: 'maulairfani15@gmail.com',
   domain: 'irfani.me',
   socials: {
