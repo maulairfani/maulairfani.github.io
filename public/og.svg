@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <radialGradient id="og-glow-1" cx="15%" cy="20%" r="50%">
+      <stop offset="0%" stop-color="#d98b5f" stop-opacity="0.22"/>
+      <stop offset="60%" stop-color="#d98b5f" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="og-glow-2" cx="85%" cy="85%" r="45%">
+      <stop offset="0%" stop-color="#d98b5f" stop-opacity="0.14"/>
+      <stop offset="60%" stop-color="#d98b5f" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="og-grain" width="28" height="28" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="0.9" fill="#e8dfd3" opacity="0.08"/>
+    </pattern>
+  </defs>
+
+  <!-- Background layers -->
+  <rect width="1200" height="630" fill="#38312a"/>
+  <rect width="1200" height="630" fill="url(#og-glow-1)"/>
+  <rect width="1200" height="630" fill="url(#og-glow-2)"/>
+  <rect width="1200" height="630" fill="url(#og-grain)"/>
+
+  <!-- Top-left mark -->
+  <g transform="translate(80, 80)">
+    <rect width="72" height="72" rx="12" fill="#2b2520"/>
+    <text x="36" y="54" text-anchor="middle"
+          font-family="Georgia, 'Times New Roman', serif"
+          font-style="italic" font-weight="400" font-size="50"
+          fill="#e8dfd3">M<tspan fill="#d98b5f" dx="-3">i</tspan></text>
+  </g>
+
+  <!-- Top-right meta -->
+  <g font-family="ui-monospace, Menlo, monospace" font-size="16" letter-spacing="2" fill="#8a8178">
+    <text x="1120" y="108" text-anchor="end">IRFANI.ME</text>
+    <text x="1120" y="132" text-anchor="end" opacity="0.75">PERSONAL · PORTFOLIO</text>
+  </g>
+
+  <!-- Main headline -->
+  <text x="80" y="316" font-family="Georgia, 'Times New Roman', serif"
+        font-weight="300" font-size="108" letter-spacing="-2" fill="#e8dfd3">
+    I build
+    <tspan font-style="italic" fill="#d98b5f"> AI-first</tspan> apps
+  </text>
+  <text x="80" y="430" font-family="Georgia, 'Times New Roman', serif"
+        font-weight="300" font-size="108" letter-spacing="-2" fill="#e8dfd3">
+    that feel
+    <tspan font-style="italic" fill="#d98b5f"> natural</tspan> to use.
+  </text>
+
+  <!-- Byline -->
+  <text x="80" y="500" font-family="Georgia, 'Times New Roman', serif"
+        font-style="italic" font-size="26" fill="#e8dfd3" opacity="0.75">
+    Maula Irfani — AI/ML Engineer, Jakarta
+  </text>
+
+  <!-- Bottom tags row -->
+  <g font-family="ui-monospace, Menlo, monospace" font-size="17" letter-spacing="2.5" fill="#8a8178">
+    <text x="80" y="570">RAG</text>
+    <text x="160" y="570">·</text>
+    <text x="190" y="570">AGENTIC SYSTEMS</text>
+    <text x="440" y="570">·</text>
+    <text x="470" y="570">MCP</text>
+    <text x="540" y="570">·</text>
+    <text x="570" y="570">MLOPS</text>
+    <text x="680" y="570">·</text>
+    <text x="710" y="570">FINE-TUNING</text>
+  </g>
+
+  <!-- Bottom-right accent dot -->
+  <circle cx="1120" cy="563" r="6" fill="#d98b5f"/>
+</svg>
