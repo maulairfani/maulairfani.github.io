@@ -1,10 +1,7 @@
 export type Fact = { key: string; value: string };
 
 export const facts: Fact[] = [
-  { key: 'Based', value: 'Jakarta, ID' },
-  { key: 'Stack', value: 'Python · FastAPI · LangChain' },
-  { key: 'Focus', value: 'Agentic systems · RAG · MCP' },
-  { key: 'Currently', value: 'AI Engineer @ MNC' },
-  { key: 'Education', value: 'B.Sc. Data Science, Unair' },
+  { key: 'Focus', value: 'Agentic systems · Computer Vision · NLP · MLOps' },
+  { key: 'Stack', value: 'Python · PyTorch · Scikit-Learn · Hugging Face · LangChain · FastAPI · MLflow' },
   { key: 'Drinks', value: 'Black coffee, no sugar' },
 ];

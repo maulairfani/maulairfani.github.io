@@ -7,7 +7,7 @@ export const site = {
   domain: 'irfani.me',
   socials: {
     github: 'https://github.com/maulairfani',
-    twitter: 'https://x.com/maulairfani',
-    linkedin: 'https://linkedin.com/in/maulairfani',
+    instagram: 'https://www.instagram.com/irfani__/',
+    linkedin: 'https://www.linkedin.com/in/maula-irfani/',
   },
 } as const;

@@ -5,7 +5,7 @@ import { site } from '../data/site';
 
 <section id="work">
   <div class="sec-head">
-    <div class="sec-num"><b>§ 02</b> &nbsp;— Selected work</div>
+    <div class="sec-num"><b>§ 03</b> &nbsp;— Selected work</div>
     <h2 class="sec-title">Things I've made,<br />roughly in order.</h2>
   </div>
 
@@ -22,7 +22,11 @@ import { site } from '../data/site';
           </div>
           <div class="desc">{p.description}</div>
           <div class="yr">{p.year}</div>
-          {p.featured && <div class="thumb" data-label={p.thumbLabel ?? 'case study'} />}
+          {p.featured && (
+            <div class="thumb" data-label={p.thumbLabel ?? 'case study'}>
+              {p.thumbImage && <img src={p.thumbImage} alt={`${p.title} preview`} loading="lazy" />}
+            </div>
+          )}
         </article>
       ))
     }

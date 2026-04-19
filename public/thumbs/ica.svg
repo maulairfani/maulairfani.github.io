@@ -1,0 +1,85 @@
+<svg viewBox="0 0 640 280" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <pattern id="grain-ica" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="0.7" fill="#e8dfd3" opacity="0.08"/>
+    </pattern>
+  </defs>
+  <rect width="640" height="280" fill="#38312a"/>
+  <rect width="640" height="280" fill="url(#grain-ica)"/>
+
+  <!-- Student Q -->
+  <g>
+    <circle cx="48" cy="52" r="13" fill="none" stroke="#8a8178" stroke-width="1.3"/>
+    <text x="48" y="56" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#8a8178">R</text>
+    <rect x="76" y="36" width="400" height="36" rx="8" fill="none" stroke="#8a8178" stroke-width="1.4"/>
+    <text x="92" y="59"
+          font-family="Fraunces, Georgia, serif" font-style="italic" font-weight="300"
+          font-size="17" fill="#8a8178">how do I solve ∫ x² dx?</text>
+  </g>
+
+  <!-- AI bubble with Cartesian graph -->
+  <g>
+    <circle cx="48" cy="148" r="13" fill="none" stroke="#d98b5f" stroke-width="1.5"/>
+    <text x="48" y="153" text-anchor="middle" font-family="Fraunces, Georgia, serif" font-style="italic" font-size="13" fill="#d98b5f">i</text>
+
+    <rect x="76" y="96" width="532" height="108" rx="8" fill="none" stroke="#d98b5f" stroke-width="2"/>
+
+    <!-- Cartesian graph inside bubble -->
+    <g transform="translate(106, 108)">
+      <!-- grid lines (light) -->
+      <g stroke="#d98b5f" stroke-width="0.4" opacity="0.18">
+        <line x1="0" y1="20" x2="472" y2="20"/>
+        <line x1="0" y1="44" x2="472" y2="44"/>
+        <line x1="0" y1="68" x2="472" y2="68"/>
+        <line x1="120" y1="0" x2="120" y2="84"/>
+        <line x1="230" y1="0" x2="230" y2="84"/>
+        <line x1="340" y1="0" x2="340" y2="84"/>
+      </g>
+
+      <!-- x-axis -->
+      <line x1="0" y1="80" x2="472" y2="80" stroke="#8a8178" stroke-width="1"/>
+      <!-- y-axis -->
+      <line x1="30" y1="0" x2="30" y2="84" stroke="#8a8178" stroke-width="1"/>
+
+      <!-- x-axis ticks + labels -->
+      <g font-family="ui-monospace, Menlo, monospace" font-size="8" fill="#8a8178">
+        <line x1="120" y1="78" x2="120" y2="82" stroke="#8a8178" stroke-width="1"/>
+        <text x="120" y="92" text-anchor="middle">1</text>
+        <line x1="230" y1="78" x2="230" y2="82" stroke="#8a8178" stroke-width="1"/>
+        <text x="230" y="92" text-anchor="middle">2</text>
+        <line x1="340" y1="78" x2="340" y2="82" stroke="#8a8178" stroke-width="1"/>
+        <text x="340" y="92" text-anchor="middle">3</text>
+        <line x1="450" y1="78" x2="450" y2="82" stroke="#8a8178" stroke-width="1"/>
+        <text x="450" y="92" text-anchor="middle">4</text>
+        <text x="22" y="84" text-anchor="end">0</text>
+      </g>
+
+      <!-- axis labels x, y -->
+      <text x="466" y="74" text-anchor="end" font-family="Fraunces, Georgia, serif" font-style="italic" font-size="11" fill="#8a8178">x</text>
+      <text x="22" y="10" text-anchor="end" font-family="Fraunces, Georgia, serif" font-style="italic" font-size="11" fill="#8a8178">y</text>
+
+      <!-- Equation label, top-left dead space -->
+      <text x="66" y="20"
+            font-family="Fraunces, Georgia, serif" font-style="italic" font-weight="300"
+            font-size="16" fill="#d98b5f">y = x³∕3</text>
+
+      <!-- Curve y = x³/3, scaled to fit -->
+      <path d="M30 80 Q170 80 230 70 T450 6"
+            fill="none" stroke="#d98b5f" stroke-width="2.2" stroke-linecap="round"/>
+    </g>
+  </g>
+
+  <!-- Chat input footer -->
+  <g>
+    <rect x="30" y="232" width="530" height="38" rx="8" fill="none" stroke="#8a8178" stroke-width="1.3"/>
+    <text x="48" y="256"
+          font-family="Fraunces, Georgia, serif" font-style="italic" font-weight="300"
+          font-size="14" fill="#8a8178" opacity="0.6">Ask Ica anything…</text>
+
+    <!-- Send button -->
+    <rect x="572" y="232" width="38" height="38" rx="8" fill="#d98b5f"/>
+    <!-- up-arrow icon -->
+    <path d="M591 262 L591 243 M581 253 L591 243 L601 253"
+          fill="none" stroke="#38312a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

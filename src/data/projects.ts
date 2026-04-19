@@ -6,6 +6,7 @@ export type Project = {
   year: string;
   featured?: boolean;
   thumbLabel?: string;
+  thumbImage?: string;
   href?: string;
 };
 
@@ -19,6 +20,7 @@ export const projects: Project[] = [
     year: '2026 — in progress',
     featured: true,
     thumbLabel: 'wip · github.com/maulairfani/envel-mcp',
+    thumbImage: '/thumbs/envel.svg',
     href: 'https://github.com/maulairfani/envel-mcp',
   },
   {
@@ -30,6 +32,7 @@ export const projects: Project[] = [
     year: '2026 — in progress',
     featured: true,
     thumbLabel: 'wip · github.com/maulairfani/attend-mlops',
+    thumbImage: '/thumbs/attend.svg',
     href: 'https://github.com/maulairfani/attend-mlops',
   },
   {
@@ -41,6 +44,7 @@ export const projects: Project[] = [
     year: '2024 — 2026',
     featured: true,
     thumbLabel: '5,000+ monthly users',
+    thumbImage: '/thumbs/ica.svg',
   },
   {
     title: 'Hospitality LLM',

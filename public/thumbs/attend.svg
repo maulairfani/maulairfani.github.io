@@ -1,0 +1,94 @@
+<svg viewBox="0 0 640 280" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <pattern id="grain-attend" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="0.7" fill="#e8dfd3" opacity="0.08"/>
+    </pattern>
+  </defs>
+  <rect width="640" height="280" fill="#38312a"/>
+  <rect width="640" height="280" fill="url(#grain-attend)"/>
+
+  <!-- Header strip -->
+  <g font-family="ui-monospace, Menlo, monospace" font-size="9" letter-spacing="1.5">
+    <circle cx="34" cy="30" r="3" fill="#d98b5f"/>
+    <text x="44" y="34" fill="#d98b5f">LIVE</text>
+    <text x="90" y="34" fill="#8a8178">· REC</text>
+    <text x="320" y="34" text-anchor="middle" fill="#8a8178">2026-04-19 · 14:32:08</text>
+    <text x="610" y="34" text-anchor="end" fill="#8a8178">FPS 15 · 720p</text>
+  </g>
+  <line x1="30" y1="48" x2="610" y2="48" stroke="#e8dfd3" stroke-width="0.5" opacity="0.18"/>
+
+  <!-- LEFT: camera viewfinder with detected face -->
+  <g>
+    <!-- viewfinder frame -->
+    <g stroke="#8a8178" stroke-width="1.2" fill="none" opacity="0.6">
+      <path d="M50 70 L50 86 M50 70 L66 70"/>
+      <path d="M290 70 L290 86 M290 70 L274 70"/>
+      <path d="M50 210 L50 194 M50 210 L66 210"/>
+      <path d="M290 210 L290 194 M290 210 L274 210"/>
+    </g>
+
+    <!-- face -->
+    <circle cx="170" cy="140" r="52" fill="none" stroke="#e8dfd3" stroke-width="2"/>
+    <g fill="#e8dfd3">
+      <circle cx="152" cy="132" r="3.5"/>
+      <circle cx="188" cy="132" r="3.5"/>
+    </g>
+    <path d="M148 158 Q170 172 192 158" stroke="#e8dfd3" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <!-- bounding box with corner brackets -->
+    <g stroke="#d98b5f" stroke-width="2.5" fill="none">
+      <path d="M108 80 L108 98"/>
+      <path d="M108 80 L126 80"/>
+      <path d="M232 80 L214 80"/>
+      <path d="M232 80 L232 98"/>
+      <path d="M108 200 L108 182"/>
+      <path d="M108 200 L126 200"/>
+      <path d="M232 200 L214 200"/>
+      <path d="M232 200 L232 182"/>
+    </g>
+
+    <!-- label box above bbox -->
+    <rect x="108" y="54" width="124" height="18" fill="#38312a" stroke="#d98b5f" stroke-width="1"/>
+    <text x="170" y="67" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="9" fill="#d98b5f" letter-spacing="1.5">IRFANI · 98%</text>
+  </g>
+
+  <!-- Divider -->
+  <line x1="330" y1="62" x2="330" y2="220" stroke="#e8dfd3" stroke-width="0.5" opacity="0.18"/>
+
+  <!-- RIGHT: attendance log table -->
+  <g font-family="ui-monospace, Menlo, monospace" font-size="10">
+    <!-- column headers -->
+    <text x="360" y="80" fill="#8a8178" letter-spacing="1.5" font-size="9">TIME</text>
+    <text x="440" y="80" fill="#8a8178" letter-spacing="1.5" font-size="9">NAME</text>
+    <text x="600" y="80" text-anchor="end" fill="#8a8178" letter-spacing="1.5" font-size="9">STATUS</text>
+    <line x1="360" y1="88" x2="600" y2="88" stroke="#8a8178" stroke-width="0.5" opacity="0.35"/>
+
+    <!-- rows -->
+    <text x="360" y="110" fill="#d98b5f">14:32</text>
+    <text x="440" y="110" fill="#d98b5f">Irfani</text>
+    <text x="600" y="110" text-anchor="end" fill="#d98b5f">✓ IN</text>
+
+    <text x="360" y="134" fill="#e8dfd3">14:31</text>
+    <text x="440" y="134" fill="#e8dfd3">Rina</text>
+    <text x="600" y="134" text-anchor="end" fill="#e8dfd3">✓ IN</text>
+
+    <text x="360" y="158" fill="#e8dfd3">14:30</text>
+    <text x="440" y="158" fill="#e8dfd3">Arif</text>
+    <text x="600" y="158" text-anchor="end" fill="#e8dfd3">✓ IN</text>
+
+    <text x="360" y="182" fill="#e8dfd3">14:28</text>
+    <text x="440" y="182" fill="#e8dfd3">Dewi</text>
+    <text x="600" y="182" text-anchor="end" fill="#e8dfd3">✓ IN</text>
+
+    <text x="360" y="206" fill="#8a8178" opacity="0.6">14:26</text>
+    <text x="440" y="206" fill="#8a8178" opacity="0.6">Budi</text>
+    <text x="600" y="206" text-anchor="end" fill="#8a8178" opacity="0.6">✓ IN</text>
+  </g>
+
+  <!-- Footer strip -->
+  <line x1="30" y1="232" x2="610" y2="232" stroke="#e8dfd3" stroke-width="0.5" opacity="0.18"/>
+  <g font-family="ui-monospace, Menlo, monospace" font-size="9" fill="#8a8178" letter-spacing="1.5">
+    <text x="30" y="252">TODAY · 42 / 58</text>
+    <text x="610" y="252" text-anchor="end">FACENET512 · YOLO11n</text>
+  </g>
+</svg>

@@ -1,29 +1,35 @@
 ---
 import { site } from '../data/site';
 
-const gh = site.socials.github.replace('https://github.com/', '');
-const tw = site.socials.twitter.replace(/https:\/\/(x|twitter)\.com\//, '');
-const li = site.socials.linkedin.replace('https://linkedin.com/', '');
+const gh = site.socials.github.replace('https://github.com/', '').replace(/\/$/, '');
+const ig = site.socials.instagram.replace(/https:\/\/(www\.)?instagram\.com\//, '').replace(/\/$/, '');
+const li = site.socials.linkedin.replace(/https:\/\/(www\.)?linkedin\.com\//, '').replace(/\/$/, '');
 ---
 
 <section id="contact" class="contact">
   <div class="sec-num" style="margin-bottom: 20px;"><b>§ 05</b> &nbsp;— Say hi</div>
-  <div class="contact-grid">
-    <div>
-      <h2>Let's <em>talk</em>.</h2>
-      <p class="lede">
-        I answer every honest email. Tell me what you're working on — especially the parts you're stuck on.
-      </p>
-      <a class="email" href={`mailto:${site.email}`}>{site.email} →</a>
-      <div class="links">
-        <a href={site.socials.github} target="_blank" rel="noopener">github &nbsp;·&nbsp; @{gh}</a>
-        <a href={site.socials.twitter} target="_blank" rel="noopener">twitter &nbsp;·&nbsp; @{tw}</a>
-        <a href={site.socials.linkedin} target="_blank" rel="noopener">linkedin &nbsp;·&nbsp; {li}</a>
-      </div>
+  <div>
+    <h2>Let's <em>talk</em>.</h2>
+    <p class="lede">
+      Building something with <i>AI</i>? Hit me up. My inbox is always open.
+    </p>
+    <a class="email" href={`mailto:${site.email}`}>{site.email} →</a>
+    <div class="links">
+      <a href={site.socials.github} target="_blank" rel="noopener">
+        <span class="platform">github</span>
+        <span class="sep">·</span>
+        <span class="handle">@{gh}</span>
+      </a>
+      <a href={site.socials.instagram} target="_blank" rel="noopener">
+        <span class="platform">instagram</span>
+        <span class="sep">·</span>
+        <span class="handle">@{ig}</span>
+      </a>
+      <a href={site.socials.linkedin} target="_blank" rel="noopener">
+        <span class="platform">linkedin</span>
+        <span class="sep">·</span>
+        <span class="handle">{li}</span>
+      </a>
     </div>
-    <aside class="side">
-      <h4>Office hours</h4>
-      <p>Thursdays, 3–5pm WIB. Open to anyone working on something small and stubborn. Bring a notebook.</p>
-    </aside>
   </div>
 </section>
