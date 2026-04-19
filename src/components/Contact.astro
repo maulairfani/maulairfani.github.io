@@ -1,0 +1,29 @@
+---
+import { site } from '../data/site';
+
+const gh = site.socials.github.replace('https://github.com/', '');
+const tw = site.socials.twitter.replace(/https:\/\/(x|twitter)\.com\//, '');
+const li = site.socials.linkedin.replace('https://linkedin.com/', '');
+---
+
+<section id="contact" class="contact">
+  <div class="sec-num" style="margin-bottom: 20px;"><b>§ 05</b> &nbsp;— Say hi</div>
+  <div class="contact-grid">
+    <div>
+      <h2>Let's <em>talk</em>.</h2>
+      <p class="lede">
+        I answer every honest email. Tell me what you're working on — especially the parts you're stuck on.
+      </p>
+      <a class="email" href={`mailto:${site.email}`}>{site.email} →</a>
+      <div class="links">
+        <a href={site.socials.github} target="_blank" rel="noopener">github &nbsp;·&nbsp; @{gh}</a>
+        <a href={site.socials.twitter} target="_blank" rel="noopener">twitter &nbsp;·&nbsp; @{tw}</a>
+        <a href={site.socials.linkedin} target="_blank" rel="noopener">linkedin &nbsp;·&nbsp; {li}</a>
+      </div>
+    </div>
+    <aside class="side">
+      <h4>Office hours</h4>
+      <p>Thursdays, 3–5pm WIB. Open to anyone working on something small and stubborn. Bring a notebook.</p>
+    </aside>
+  </div>
+</section>

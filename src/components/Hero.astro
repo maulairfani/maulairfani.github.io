@@ -1,0 +1,23 @@
+---
+import { site } from '../data/site';
+---
+
+<section class="hero">
+  <div class="kicker">
+    <span class="dot"></span>
+    <span>A quiet corner of the internet</span>
+    <span>·</span>
+    <span>{site.location}</span>
+  </div>
+  <h1>
+    Building <span class="it">thoughtful</span><br />
+    machines, one<br />
+    <span class="it">small idea</span> <span class="amp">&amp;</span> one<br />
+    long walk at a time.
+  </h1>
+  <p class="lede">
+    Hi — I'm <b>{site.name.split(' ')[0]}</b>. I'm an <b>{site.role}</b> who enjoys the slow, hands-on parts of
+    the work: poking at data, tuning prompts by lamplight, wiring up small systems that feel <i>alive</i>. This
+    is a notebook of things I've made and things I'm thinking about.
+  </p>
+</section>

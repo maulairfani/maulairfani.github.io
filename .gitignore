@@ -1,0 +1,30 @@
+# build output
+dist/
+.astro/
+
+# dependencies
+node_modules/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# env
+.env
+.env.production
+
+# editors
+.vscode/
+.idea/
+.DS_Store
+
+# personal / private
+CV*.pdf
+*CV*.pdf
+*resume*.pdf
+!public/resume.pdf
+
+# design references (local only)
+design-reference/

@@ -1,0 +1,23 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Masthead from '../components/Masthead.astro';
+import Hero from '../components/Hero.astro';
+import About from '../components/About.astro';
+import Work from '../components/Work.astro';
+import Experience from '../components/Experience.astro';
+// import Playlist from '../components/Playlist.astro';
+import Contact from '../components/Contact.astro';
+import Footer from '../components/Footer.astro';
+import { site } from '../data/site';
+---
+
+<BaseLayout title={`${site.name} — ${site.role}`}>
+  <Masthead />
+  <Hero />
+  <About />
+  <Work />
+  <Experience />
+  {/* <Playlist /> */}
+  <Contact />
+  <Footer />
+</BaseLayout>

@@ -1,0 +1,17 @@
+---
+import { site } from '../data/site';
+
+const [first, ...rest] = site.name.split(' ');
+const last = rest.join(' ');
+---
+
+<header class="masthead">
+  <div class="mark">{first} <em>{last}</em></div>
+  <div class="meta">personal · portfolio · est. 2026</div>
+  <nav>
+    <a href="#about">About</a>
+    <a href="#work">Work</a>
+    <a href="#exp">Résumé</a>
+    <a href="#contact">Contact</a>
+  </nav>
+</header>

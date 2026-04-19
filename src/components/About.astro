@@ -1,0 +1,45 @@
+---
+import { facts } from '../data/facts';
+---
+
+<section id="about">
+  <div class="sec-head">
+    <div class="sec-num"><b>§ 01</b> &nbsp;— About</div>
+    <h2 class="sec-title">A little <em>about</em> me,<br />in plain prose.</h2>
+  </div>
+
+  <div class="about-body">
+    <div class="portrait" aria-hidden="true"></div>
+    <div class="prose">
+      <p>
+        I'm an <b>AI engineer</b> working at the intersection of <b>language models</b>, <b>agents</b>, and
+        <b>retrieval</b> — the end-to-end parts of building systems that
+        <span class="hi">need to stay useful after the demo ends</span>. Currently at <b>MNC Group</b>;
+        previously at Analitica, where I built <i>Ica</i>, a multi-agent tutor that served five thousand
+        students a month.
+      </p>
+      <p>
+        I'm drawn to the quiet plumbing: long-term memory, function-calling, and the small act of getting a
+        model to say <i>"I don't know"</i> when it should. Most of my favorite days look like evals, retrieval
+        pipelines, and the slow work that makes a system feel <i>honest</i> rather than clever.
+      </p>
+      <p>
+        Based in Jakarta. I came up through ESG data work at <b>Astra</b> and sustainability ML at
+        <b>CESGS</b>, then studied Data Science at <b>Universitas Airlangga</b>, where I led a small research
+        community called IRIS. Co-author of a short paper on RAG for university chatbots
+        (<i>KST 2024</i>).
+      </p>
+
+      <dl class="fact-list">
+        {
+          facts.map((f) => (
+            <div>
+              <dt>{f.key}</dt>
+              <dd>{f.value}</dd>
+            </div>
+          ))
+        }
+      </dl>
+    </div>
+  </div>
+</section>

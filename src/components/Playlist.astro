@@ -1,0 +1,31 @@
+---
+import { playlist } from '../data/playlist';
+---
+
+<section id="playlist">
+  <div class="sec-head">
+    <div class="sec-num"><b>§ 04</b> &nbsp;— On the record</div>
+    <h2 class="sec-title">A small <em>playlist</em><br />for long debugging.</h2>
+  </div>
+
+  {
+    playlist.map((side, i) => (
+      <>
+        <div class="playlist-head" style={i > 0 ? 'margin-top: 28px;' : ''}>
+          <span>{side.label}</span>
+          <span>{side.subtitle}</span>
+        </div>
+        {side.tracks.map((t) => (
+          <div class="track">
+            <div class="n">{t.n}</div>
+            <div class="ti" set:html={t.title} />
+            <div class="ar">{t.artist}</div>
+            <div class="dur">{t.duration}</div>
+          </div>
+        ))}
+      </>
+    ))
+  }
+
+  <p class="playlist-note">made with love, and one too many cups of coffee ☕ —</p>
+</section>
