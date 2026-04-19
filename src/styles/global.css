@@ -719,7 +719,8 @@ footer.colophon {
     padding: 20px 0 14px;
   }
   .masthead .meta,
-  .masthead nav { display: none; }
+  .masthead nav,
+  .masthead .mark-text { display: none; }
   .hero {
     min-height: calc(100vh - 80px);
     padding: clamp(32px, 6vh, 60px) 0 clamp(72px, 14vh, 140px);
