@@ -63,6 +63,10 @@ const personSchema = {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
 
+    <script is:inline>
+      document.documentElement.classList.add('js');
+    </script>
+
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta name="author" content={site.fullName} />
@@ -104,5 +108,24 @@ const personSchema = {
     <div class="wrap">
       <slot />
     </div>
+
+    <script>
+      const targets = document.querySelectorAll('section:not(.hero), footer.colophon');
+      targets.forEach((el) => el.classList.add('reveal'));
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('is-visible');
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.08, rootMargin: '0px 0px -60px 0px' }
+      );
+
+      targets.forEach((el) => observer.observe(el));
+    </script>
   </body>
 </html>
