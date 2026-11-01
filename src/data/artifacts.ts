@@ -6,8 +6,8 @@ export type Artifact = {
 
 export const artifacts: Artifact[] = [
   {
-    slug: 'sample',
-    title: 'Sample artifact',
-    description: 'A tiny counter to check that React and Tailwind work.',
+    slug: 'number-formats',
+    title: 'Number formats: FP32, FP16, BF16 and INT8',
+    description: 'Quantization, part 1. How computers store numbers, in small interactive bites.',
   },
 ];

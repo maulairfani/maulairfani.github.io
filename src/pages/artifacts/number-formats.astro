@@ -1,0 +1,181 @@
+---
+import '../../styles/global.css';
+import MemoryCalculator from '../../components/artifacts/number-formats/MemoryCalculator.tsx';
+import IntBits from '../../components/artifacts/number-formats/IntBits.tsx';
+import FloatAnatomy from '../../components/artifacts/number-formats/FloatAnatomy.tsx';
+import RangeVsPrecision, { FormatTable } from '../../components/artifacts/number-formats/RangeVsPrecision.tsx';
+import Quiz from '../../components/artifacts/number-formats/Quiz.tsx';
+import { Bite } from '../../components/artifacts/number-formats/ui.tsx';
+
+import Sources from '../../components/Sources.astro';
+
+const sources = [
+  {
+    title: 'A Visual Guide to Quantization',
+    url: 'https://newsletter.maartengrootendorst.com/p/a-visual-guide-to-quantization',
+    author: 'Maarten Grootendorst',
+    note: 'The main reference for this series. This page is my own notes and examples built after reading it.',
+  },
+];
+
+const title = 'Number formats: FP32, FP16, BF16 and INT8';
+const description = 'A small, interactive guide to how computers store numbers, and why it matters for model size.';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+  </head>
+  <body class="bg-white text-neutral-900 antialiased">
+    <main class="mx-auto max-w-2xl px-5 py-12 sm:py-20">
+      <nav class="text-sm text-neutral-500">
+        <a href="/" class="underline underline-offset-4 hover:text-neutral-900">← Maula Irfani</a>
+      </nav>
+
+      <header class="mt-8">
+        <p class="text-xs font-medium uppercase tracking-widest text-neutral-400">Quantization · Part 1</p>
+        <h1 class="mt-2 text-3xl font-semibold tracking-tight">Number formats</h1>
+        <p class="mt-4 leading-relaxed text-neutral-700">
+          Before we can shrink a model, we need to know how it stores its numbers. This page is my set of small bites
+          to learn that, with tiny examples you can play with. Click the bits. Break things.
+        </p>
+      </header>
+
+      <Bite
+        n={1}
+        title="Why do we care?"
+        remember="Memory = number of parameters × bytes per number. Fewer bytes per number means a smaller model."
+        question="But what is inside those bytes? Let us open one up."
+      >
+        <p>
+          A model is a huge pile of numbers called <b>parameters</b>. Every number takes some bytes of memory. So:
+        </p>
+        <p class="rounded-lg bg-neutral-100 px-4 py-3 text-center font-mono text-sm">
+          memory = number of parameters × bytes per number
+        </p>
+        <p>
+          Let us start small. Say each number takes <b>4 bytes</b> (this is the FP32 format, you will see why later).
+          Now count up:
+        </p>
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[22rem] text-left text-sm tabular-nums">
+            <thead class="text-xs uppercase tracking-wide text-neutral-400">
+              <tr>
+                <th class="py-2 pr-3 font-medium">Numbers</th>
+                <th class="py-2 pr-3 font-medium">× 4 bytes</th>
+                <th class="py-2 font-medium">In plain words</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-neutral-200">
+              <tr><td class="py-2 pr-3">1</td><td class="py-2 pr-3">4 bytes</td><td class="py-2 text-neutral-500">tiny</td></tr>
+              <tr><td class="py-2 pr-3">1,000</td><td class="py-2 pr-3">4,000 bytes</td><td class="py-2 text-neutral-500">4 KB, a short text file</td></tr>
+              <tr><td class="py-2 pr-3">1 million</td><td class="py-2 pr-3">4 million bytes</td><td class="py-2 text-neutral-500">4 MB, one phone photo</td></tr>
+              <tr><td class="py-2 pr-3">1 billion</td><td class="py-2 pr-3">4 billion bytes</td><td class="py-2 text-neutral-500">4 GB, a small movie</td></tr>
+              <tr class="font-medium"><td class="py-2 pr-3">70 billion</td><td class="py-2 pr-3">280 billion bytes</td><td class="py-2">280 GB</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Here is the shortcut. One billion bytes is one gigabyte (GB). So when the parameters are counted in
+          billions, the answer is already in GB: <b>70 billion × 4 bytes = 280 GB</b>. Pick a model size below and
+          watch what each format does.
+        </p>
+        <MemoryCalculator client:load />
+        <p>Fewer bytes per number means a smaller model. So the goal is clear: use fewer bytes.</p>
+      </Bite>
+
+      <Bite
+        n={2}
+        title="Bits are switches"
+        remember="N bits give 2^N patterns. 8 bits give 256 patterns, so INT8 holds 256 whole numbers."
+        question="INT8 only holds whole numbers like 0 to 255. How do we store 0.15625, or a huge number like one billion?"
+      >
+        <p>
+          A <b>bit</b> is a switch that is either 0 or 1. Put 8 of them in a row and you have a <b>byte</b>. Each
+          switch is worth a different amount: 1, 2, 4, 8, and so on. Add up the switches that are on.
+        </p>
+        <IntBits client:load />
+        <p>
+          With 8 bits there are 2<sup>8</sup> = 256 patterns. That is why INT8 can hold only 256 different values.
+          And they are whole numbers only.
+        </p>
+      </Bite>
+
+      <Bite
+        n={3}
+        title="Floats: sign, exponent, mantissa"
+        remember="A float is sign × (1 + mantissa) × 2^exponent. The exponent sets the scale. The mantissa sets the detail."
+        question="FP16 and BF16 both use 16 bits, but they split them in different ways. Why have two, and what does each gain or lose?"
+      >
+        <p>
+          The answer is <b>floating point</b>. It works like scientific notation. Take 0.15625 from the question above.
+          We can write it as:
+        </p>
+        <p class="rounded-lg bg-neutral-100 px-4 py-3 text-center font-mono text-sm">
+          0.15625 = +1 × 1.25 × 2<sup>-3</sup>
+        </p>
+        <p>
+          Three pieces: a <b class="text-rose-700">sign</b> (+ or -), an <b class="text-amber-700">exponent</b> (the
+          power of 2, which sets the scale), and a <b class="text-sky-700">mantissa</b> (the digits after the
+          point). The leading 1 in 1.25 is always there, so we do not store it. It is called the hidden 1.
+        </p>
+        <p>
+          The exponent is stored with a <b>bias</b> so it can be negative. For FP32 the bias is 127. Click any bit
+          below and watch the number change.
+        </p>
+        <FloatAnatomy client:load />
+        <p>
+          Now switch to FP16 and BF16 above. Same idea, but the bits are split in different ways. Look at how many
+          bits the exponent and the mantissa get.
+        </p>
+      </Bite>
+
+      <Bite
+        n={4}
+        title="Range vs precision"
+        remember="More exponent bits mean more range. More mantissa bits mean more precision. With a fixed number of bits, you trade one for the other."
+        question="Back to our memory problem: how far can we cut the bytes before the numbers break?"
+      >
+        <p>
+          That split is the whole trade. More exponent bits give a wider <b>range</b>: how big and how small a number can be. More mantissa bits
+          give more <b>precision</b>: how close neighbour numbers are. With a fixed number of bits, you trade one
+          for the other.
+        </p>
+        <FormatTable />
+        <p>
+          FP16 and BF16 both use 16 bits, but they choose differently. FP16 keeps more precision. BF16 keeps the
+          same range as FP32 and gives up precision. Type a number below and see what each format does to it. Try
+          70000 and 0.00001.
+        </p>
+        <RangeVsPrecision client:load />
+        <p>
+          Notice that 0.1 is never exact in any format. Computers count in 2s, and 0.1 does not fit neatly. More
+          mantissa bits just get closer.
+        </p>
+      </Bite>
+
+      <Bite n={5} title="Quick quiz">
+        <p>Six questions to check what stuck from the four bites above. Your score is not saved.</p>
+        <Quiz client:load />
+      </Bite>
+
+      <p class="border-t border-neutral-200 pt-8 text-sm text-neutral-500">
+        Next up, the answer to the last question: how to turn a big format into a small one (INT8, INT4) without
+        losing too much.
+      </p>
+
+      <div class="mt-8">
+        <Sources items={sources} />
+      </div>
+    </main>
+  </body>
+</html>
