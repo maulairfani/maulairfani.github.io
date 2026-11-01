@@ -1,0 +1,55 @@
+---
+import '../styles/global.css';
+import { artifacts } from '../data/artifacts';
+
+const title = 'Maula Irfani';
+const description = "I'm an AI/ML engineer based in Jakarta, and this is where I share my little experiments.";
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+  </head>
+  <body class="bg-white text-neutral-900 antialiased">
+    <main class="mx-auto max-w-xl px-6 py-24 sm:py-32">
+      <header>
+        <h1 class="text-2xl font-semibold tracking-tight">Maula Irfani</h1>
+        <p class="mt-4 leading-relaxed text-neutral-600">
+          I'm an AI/ML engineer based in Jakarta, and this is where I share my little experiments.
+        </p>
+        <p class="mt-4 text-sm text-neutral-500">
+          <a class="underline underline-offset-4 hover:text-neutral-900" href="https://github.com/maulairfani">GitHub</a>
+          ·
+          <a class="underline underline-offset-4 hover:text-neutral-900" href="https://www.linkedin.com/in/maula-irfani/">LinkedIn</a>
+          ·
+          <a class="underline underline-offset-4 hover:text-neutral-900" href="mailto:maulairfani15@gmail.com">Email</a>
+        </p>
+      </header>
+
+      <section class="mt-16">
+        <h2 class="text-sm font-medium uppercase tracking-widest text-neutral-400">Artifacts</h2>
+        <ul class="mt-4 divide-y divide-neutral-200 border-y border-neutral-200">
+          {
+            artifacts.map((a) => (
+              <li>
+                <a href={`/artifacts/${a.slug}/`} class="group block py-4">
+                  <span class="font-medium group-hover:underline underline-offset-4">{a.title}</span>
+                  <span class="mt-1 block text-sm text-neutral-500">{a.description}</span>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+    </main>
+  </body>
+</html>
