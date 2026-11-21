@@ -20,6 +20,15 @@ const sources = [
 
 const title = 'Number formats: FP32, FP16, BF16 and INT8';
 const description = 'A small, interactive guide to how computers store numbers, and why it matters for model size.';
+
+const contents = [
+  { id: 'why', label: 'Why do we care?' },
+  { id: 'bits', label: 'Bits are switches' },
+  { id: 'floats', label: 'Floats: sign, exponent, mantissa' },
+  { id: 'range', label: 'Range vs precision' },
+  { id: 'self-check', label: 'Self-check quiz' },
+  { id: 'sources', label: 'Sources' },
+];
 ---
 
 <!doctype html>
@@ -42,15 +51,45 @@ const description = 'A small, interactive guide to how computers store numbers, 
       </nav>
 
       <header class="mt-6 border-t-[6px] border-black pt-3">
-        <p class="font-label text-[11px] font-bold uppercase tracking-[0.12em]">Quantization · Part 1</p>
+        <p class="font-label text-[11px] font-bold uppercase tracking-[0.12em]">Quantization · Part 1 · Study guide</p>
         <h1 class="mt-3 font-display text-4xl font-bold leading-[1.1] tracking-tight">Number formats</h1>
         <p class="mt-4 font-body text-lg leading-relaxed text-neutral-800">
-          Before we can shrink a model, we need to know how it stores its numbers. This page is my set of small bites
+          Before we can shrink a model, we need to know how it stores its numbers. This guide is a set of small bites
           to learn that, with tiny examples you can play with. Click the bits. Break things.
         </p>
+        <dl class="mt-5 grid grid-cols-[115px_minmax(0,1fr)] gap-x-3 gap-y-1 text-sm">
+          <dt class="font-display font-bold">Audience</dt>
+          <dd>Anyone new to model quantization. No math background needed beyond powers of 2.</dd>
+          <dt class="font-display font-bold">Scope</dt>
+          <dd>How FP32, FP16, BF16 and INT8 store numbers, and the range and precision trade-off. Not yet: how to quantize a model.</dd>
+        </dl>
       </header>
 
+      <nav class="mt-10 border-t border-black pt-4" aria-labelledby="contents-title">
+        <h2 id="contents-title" class="font-label text-[11px] font-bold uppercase tracking-[0.12em]">Contents</h2>
+        <ol class="mt-3 grid gap-x-8 text-sm sm:grid-cols-2">
+          {
+            contents.map((c, i) => (
+              <li class="border-b border-neutral-300 py-1.5">
+                <a href={`#${c.id}`} class="underline underline-offset-4 hover:no-underline">
+                  <span class="font-label text-neutral-500">{i + 1}.</span> {c.label}
+                </a>
+              </li>
+            ))
+          }
+        </ol>
+      </nav>
+
+      <section id="prerequisites" class="mt-10 border border-dashed border-neutral-600 px-4 py-3 text-sm">
+        <h2 class="font-display text-xs font-bold uppercase tracking-[0.12em]">Before you start</h2>
+        <p class="mt-2">
+          You should know what a power of 2 is: 2<sup>3</sup> = 2 × 2 × 2 = 8. That is all. Every other idea is
+          explained on the page.
+        </p>
+      </section>
+
       <Bite
+        id="why"
         n={1}
         title="Why do we care?"
         remember="Memory = number of parameters × bytes per number. Fewer bytes per number means a smaller model."
@@ -94,6 +133,7 @@ const description = 'A small, interactive guide to how computers store numbers, 
       </Bite>
 
       <Bite
+        id="bits"
         n={2}
         title="Bits are switches"
         remember="N bits give 2^N patterns. 8 bits give 256 patterns, so INT8 holds 256 whole numbers."
@@ -111,6 +151,7 @@ const description = 'A small, interactive guide to how computers store numbers, 
       </Bite>
 
       <Bite
+        id="floats"
         n={3}
         title="Floats: sign, exponent, mantissa"
         remember="A float is sign × (1 + mantissa) × 2^exponent. The exponent sets the scale. The mantissa sets the detail."
@@ -124,9 +165,9 @@ const description = 'A small, interactive guide to how computers store numbers, 
           0.15625 = +1 × 1.25 × 2<sup>-3</sup>
         </p>
         <p>
-          Three pieces: a <b class="text-rose-700">sign</b> (+ or -), an <b class="text-amber-700">exponent</b> (the
-          power of 2, which sets the scale), and a <b class="text-sky-700">mantissa</b> (the digits after the
-          point). The leading 1 in 1.25 is always there, so we do not store it. It is called the hidden 1.
+          Three pieces: a <b>sign</b> (+ or -), an <b>exponent</b> (the power of 2, which sets the scale), and a{' '}
+          <b>mantissa</b> (the digits after the point). The leading 1 in 1.25 is always there, so we do not store it.
+          It is called the hidden 1.
         </p>
         <p>
           The exponent is stored with a <b>bias</b> so it can be negative. For FP32 the bias is 127. Click any bit
@@ -140,15 +181,16 @@ const description = 'A small, interactive guide to how computers store numbers, 
       </Bite>
 
       <Bite
+        id="range"
         n={4}
         title="Range vs precision"
         remember="More exponent bits mean more range. More mantissa bits mean more precision. With a fixed number of bits, you trade one for the other."
         question="Back to our memory problem: how far can we cut the bytes before the numbers break?"
       >
         <p>
-          That split is the whole trade. More exponent bits give a wider <b>range</b>: how big and how small a number can be. More mantissa bits
-          give more <b>precision</b>: how close neighbour numbers are. With a fixed number of bits, you trade one
-          for the other.
+          That split is the whole trade. More exponent bits give a wider <b>range</b>: how big and how small a number
+          can be. More mantissa bits give more <b>precision</b>: how close neighbour numbers are. With a fixed number
+          of bits, you trade one for the other.
         </p>
         <FormatTable />
         <p>
@@ -163,8 +205,11 @@ const description = 'A small, interactive guide to how computers store numbers, 
         </p>
       </Bite>
 
-      <Bite n={5} title="Quick quiz">
-        <p>Six questions to check what stuck from the four bites above. Your score is not saved.</p>
+      <Bite id="self-check" n={5} title="Self-check quiz">
+        <p>
+          Six questions to check what stuck from the four bites above. Pick an answer and the correct one is shown
+          with the reason. Your score is not saved.
+        </p>
         <Quiz client:load />
       </Bite>
 
@@ -173,7 +218,7 @@ const description = 'A small, interactive guide to how computers store numbers, 
         losing too much.
       </p>
 
-      <div class="mt-8">
+      <div id="sources" class="mt-8">
         <Sources items={sources} />
       </div>
     </main>

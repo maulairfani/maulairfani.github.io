@@ -14,12 +14,14 @@ export function chip(on: boolean) {
 }
 
 export function Bite({
+  id,
   n,
   title,
   remember,
   question,
   children,
 }: {
+  id?: string;
   n: number;
   title: string;
   /** One-line takeaway, shown at the end of the bite. */
@@ -29,9 +31,9 @@ export function Bite({
   children: ReactNode;
 }) {
   return (
-    <section className="mt-12 border-t-[3px] border-black pt-4">
+    <section id={id} className="mt-12 border-t-[3px] border-black pt-4">
       <p className="font-label text-[11px] font-bold uppercase tracking-[0.12em]">Bite {n}</p>
-      <h2 className="mt-2 font-display text-2xl font-bold leading-tight">{title}</h2>
+      <h3 className="mt-2 font-display text-2xl font-bold leading-tight">{title}</h3>
       <div className="mt-5 space-y-4 leading-relaxed text-neutral-800">
         {children}
         {remember && (
