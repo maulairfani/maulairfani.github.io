@@ -36,3 +36,14 @@ Artifacts exist so the author can learn a topic interactively; they are public n
 - `main` deploys to production on push (GitHub Actions). Do not push to `main` without being asked.
 - Tag `v1-archive` (and branch `archive`) hold the previous site.
 - Commit messages: short imperative subject.
+- Workflow: edit files in the local clone (`~/project/maulairfani.github.io`), run `npm run build`, then copy the changed files to the `sumopod` clone (`~/maulairfani.github.io`) and commit there. Never commit in the local clone.
+- Commit author must be `Maula Irfani <maulairfani15@gmail.com>`. Set it per command (`git -c user.name=... -c user.email=...`); the server has no default identity.
+- Never commit macOS metadata (`._*`, `.DS_Store`). Copy files with `COPYFILE_DISABLE=1` or copy them one at a time, and check `git show --stat` before pushing.
+- Push only after the user says "push".
+
+## Study guides
+
+- Study guides are the site's main content. Each one lives in a single route. Keep existing URLs stable; never move a guide to a new path.
+- Titles, descriptions, tags, and updated dates come from one shared registry. Do not hard-code them on index pages.
+- Write guides in the editorial style from the `editorial-html` skill (`.claude/skills/editorial-html/`): one `h1`, a clear header with audience and scope, a contents list, small bites, a recap, and a self-check.
+- Guide HTML must be readable without JavaScript. Widgets may add interactivity, but the text must stand on its own.
