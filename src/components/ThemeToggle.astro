@@ -1,0 +1,21 @@
+<button
+  type="button"
+  data-theme-toggle
+  class="font-label text-[11px] font-bold uppercase tracking-[0.12em] underline underline-offset-4 hover:no-underline"
+  aria-label="Switch to dark mode"
+>
+  <span class="dark:hidden">Dark mode</span>
+  <span class="hidden dark:inline">Light mode</span>
+</button>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const dark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('theme', dark ? 'dark' : 'light');
+      document.querySelectorAll('[data-theme-toggle]').forEach((b) =>
+        b.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode'),
+      );
+    });
+  });
+</script>
