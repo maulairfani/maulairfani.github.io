@@ -5,6 +5,14 @@ function withSuperscripts(text: string): ReactNode[] {
   return text.split(/\^(\w+)/).map((part, i) => (i % 2 === 1 ? <sup key={i}>{part}</sup> : part));
 }
 
+export const button = 'border border-neutral-500 bg-white px-3 py-1 font-label text-sm hover:bg-neutral-200';
+
+export function chip(on: boolean) {
+  return `border px-3 py-1 font-label text-sm ${
+    on ? 'border-black bg-black text-white' : 'border-neutral-500 bg-white hover:bg-neutral-200'
+  }`;
+}
+
 export function Bite({
   n,
   title,
@@ -21,19 +29,19 @@ export function Bite({
   children: ReactNode;
 }) {
   return (
-    <section className="border-t border-neutral-200 py-10">
-      <p className="text-xs font-medium uppercase tracking-widest text-neutral-400">Bite {n}</p>
-      <h2 className="mt-1 text-xl font-semibold tracking-tight">{title}</h2>
-      <div className="mt-4 space-y-4 leading-relaxed text-neutral-700">
+    <section className="mt-12 border-t-[3px] border-black pt-4">
+      <p className="font-label text-[11px] font-bold uppercase tracking-[0.12em]">Bite {n}</p>
+      <h2 className="mt-2 font-display text-2xl font-bold leading-tight">{title}</h2>
+      <div className="mt-5 space-y-4 leading-relaxed text-neutral-800">
         {children}
         {remember && (
-          <fieldset className="rounded-sm border border-neutral-300 px-4 pb-3 pt-0">
-            <legend className="px-2 text-xs font-medium uppercase tracking-widest text-neutral-500">Remember</legend>
-            <p className="text-sm text-neutral-900">{withSuperscripts(remember)}</p>
-          </fieldset>
+          <div className="border border-l-[7px] border-black bg-white px-4 py-3">
+            <p className="font-display text-xs font-bold uppercase tracking-[0.12em]">Remember</p>
+            <p className="mt-1 text-[15px] text-neutral-900">{withSuperscripts(remember)}</p>
+          </div>
         )}
         {question && (
-          <p className="pt-2 font-medium text-neutral-900">
+          <p className="border border-dashed border-neutral-600 px-4 py-3 font-medium text-neutral-900">
             <span aria-hidden="true">↓ </span>
             {question}
           </p>
@@ -44,16 +52,16 @@ export function Bite({
 }
 
 export function Widget({ children }: { children: ReactNode }) {
-  return <div className="space-y-4 rounded-xl border border-neutral-200 bg-neutral-50 p-4 sm:p-5">{children}</div>;
+  return <div className="space-y-4 border border-neutral-400 bg-neutral-100 p-4 sm:p-5">{children}</div>;
 }
 
 export type BitKind = 'sign' | 'exp' | 'man' | 'plain';
 
 const kindStyles: Record<BitKind, string> = {
-  sign: 'border-rose-200 bg-rose-100 text-rose-800',
-  exp: 'border-amber-200 bg-amber-100 text-amber-800',
-  man: 'border-sky-200 bg-sky-100 text-sky-800',
-  plain: 'border-neutral-300 bg-white text-neutral-800',
+  sign: 'border-black bg-black text-white',
+  exp: 'border-neutral-600 bg-neutral-300 text-black',
+  man: 'border-neutral-600 bg-white text-black',
+  plain: 'border-neutral-500 bg-white text-black',
 };
 
 export function BitCell({
@@ -70,7 +78,7 @@ export function BitCell({
   big?: boolean;
 }) {
   const size = big ? 'h-12 w-10 text-base' : 'h-8 w-5 text-xs sm:w-6';
-  const cls = `inline-grid place-items-center rounded border font-mono tabular-nums ${size} ${kindStyles[kind]} ${
+  const cls = `inline-grid place-items-center border font-label tabular-nums ${size} ${kindStyles[kind]} ${
     value === 1 ? 'font-bold' : 'opacity-60'
   }`;
   if (!onClick) return <span className={cls}>{value}</span>;
@@ -80,7 +88,7 @@ export function BitCell({
       aria-label={label}
       aria-pressed={value === 1}
       onClick={onClick}
-      className={`${cls} cursor-pointer hover:brightness-95`}
+      className={`${cls} cursor-pointer hover:opacity-80`}
     >
       {value}
     </button>
@@ -94,10 +102,10 @@ export function Legend() {
     { kind: 'man', text: 'Mantissa' },
   ];
   return (
-    <div className="flex flex-wrap gap-3 text-xs text-neutral-600">
+    <div className="flex flex-wrap gap-3 text-xs text-neutral-700">
       {items.map((i) => (
         <span key={i.text} className="inline-flex items-center gap-1.5">
-          <span className={`h-3 w-3 rounded border ${kindStyles[i.kind]}`} />
+          <span className={`h-3 w-3 border ${kindStyles[i.kind]}`} />
           {i.text}
         </span>
       ))}

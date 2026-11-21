@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { BF16, FP16, FP32, bias, bitString, decode, encode, fmtNum, maxExpField } from '../../../lib/floats';
 import type { Format, Parts } from '../../../lib/floats';
-import { FloatBits, Legend, Widget } from './ui';
+import { FloatBits, Legend, Widget, button, chip } from './ui';
 
 const FORMATS = [FP32, FP16, BF16];
 const PRESETS = [0.15625, 1, 6.5, 100];
@@ -34,20 +34,11 @@ export default function FloatAnatomy() {
     <Widget>
       <div className="flex flex-wrap items-center gap-2">
         {FORMATS.map((f) => (
-          <button
-            key={f.name}
-            type="button"
-            onClick={() => switchFormat(f)}
-            className={`rounded-lg border px-3 py-1 text-sm ${
-              f.name === fmt.name
-                ? 'border-neutral-900 bg-neutral-900 text-white'
-                : 'border-neutral-300 bg-white hover:bg-neutral-100'
-            }`}
-          >
+          <button key={f.name} type="button" onClick={() => switchFormat(f)} className={chip(f.name === fmt.name)}>
             {f.name}
           </button>
         ))}
-        <span className="text-xs text-neutral-500">
+        <span className="font-label text-xs text-neutral-600">
           1 + {fmt.exp} + {fmt.man} = {1 + fmt.exp + fmt.man} bits
         </span>
       </div>
@@ -61,21 +52,21 @@ export default function FloatAnatomy() {
       <Legend />
 
       <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-        <dt className="font-medium text-rose-700">Sign</dt>
+        <dt className="font-display font-bold">Sign</dt>
         <dd>
           {parts.sign} means {parts.sign ? 'negative (-1)' : 'positive (+1)'}
         </dd>
 
         {special ? (
           <>
-            <dt className="font-medium text-amber-700">Exponent</dt>
+            <dt className="font-display font-bold">Exponent</dt>
             <dd>
               All ones ({parts.exp}). This is a special code: {parts.man === 0 ? 'infinity.' : 'NaN (not a number).'}
             </dd>
           </>
         ) : subnormal ? (
           <>
-            <dt className="font-medium text-amber-700">Exponent</dt>
+            <dt className="font-display font-bold">Exponent</dt>
             <dd>
               All zeros. Special case for tiny numbers: there is no hidden 1, so the number is{' '}
               {fmtNum(frac)} × 2<sup>{1 - b}</sup>.
@@ -83,12 +74,12 @@ export default function FloatAnatomy() {
           </>
         ) : (
           <>
-            <dt className="font-medium text-amber-700">Exponent</dt>
+            <dt className="font-display font-bold">Exponent</dt>
             <dd>
               Stored as {parts.exp}. Subtract the bias {b}: {parts.exp} - {b} = {e}. So the scale is 2<sup>{e}</sup> ={' '}
               {fmtNum(2 ** e)}.
             </dd>
-            <dt className="font-medium text-sky-700">Mantissa</dt>
+            <dt className="font-display font-bold">Mantissa</dt>
             <dd>
               The bits give {fmtNum(frac)}. Add the hidden 1: 1 + {fmtNum(frac)} = {fmtNum(1 + frac)}.
             </dd>
@@ -96,24 +87,19 @@ export default function FloatAnatomy() {
         )}
       </dl>
 
-      <div className="rounded-lg bg-white px-4 py-3 text-center">
+      <div className="border border-black bg-white px-4 py-3 text-center">
         {!special && !subnormal && (
-          <p className="font-mono text-sm text-neutral-600">
+          <p className="font-label text-sm text-neutral-700">
             {parts.sign ? '-1' : '+1'} × {fmtNum(1 + frac)} × {fmtNum(2 ** e)}
           </p>
         )}
-        <p className="text-2xl font-semibold tabular-nums">{fmtNum(value)}</p>
+        <p className="font-display text-2xl font-bold tabular-nums">{fmtNum(value)}</p>
       </div>
 
       <div className="flex flex-wrap items-center gap-2 text-sm">
-        <span className="text-neutral-600">Load a number:</span>
+        <span className="text-neutral-700">Load a number:</span>
         {PRESETS.map((p) => (
-          <button
-            key={p}
-            type="button"
-            onClick={() => setParts(encode(p, fmt))}
-            className="rounded-lg border border-neutral-300 bg-white px-3 py-1 hover:bg-neutral-100"
-          >
+          <button key={p} type="button" onClick={() => setParts(encode(p, fmt))} className={button}>
             {p}
           </button>
         ))}

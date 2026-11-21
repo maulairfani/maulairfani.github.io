@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BitCell, Widget } from './ui';
+import { BitCell, Widget, button } from './ui';
 
 export default function IntBits() {
   const [bits, setBits] = useState([0, 1, 0, 0, 1, 0, 1, 0]); // 74
@@ -18,14 +18,14 @@ export default function IntBits() {
         {bits.map((b, i) => (
           <div key={i} className="flex flex-col items-center gap-1">
             <BitCell big value={b} kind="plain" label={`Bit worth ${weights[i]}`} onClick={() => flip(i)} />
-            <span className="font-mono text-xs text-neutral-500">{weights[i]}</span>
+            <span className="font-label text-xs text-neutral-600">{weights[i]}</span>
           </div>
         ))}
       </div>
 
       <div className="text-center">
-        <p className="font-mono text-sm text-neutral-600">{sum}</p>
-        <p className="mt-1 text-4xl font-semibold tabular-nums">{total}</p>
+        <p className="font-label text-sm text-neutral-700">{sum}</p>
+        <p className="mt-1 font-display text-4xl font-bold tabular-nums">{total}</p>
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
@@ -33,15 +33,11 @@ export default function IntBits() {
           <input type="checkbox" checked={signed} onChange={(e) => setSigned(e.target.checked)} />
           Signed (the left bit counts as -128)
         </label>
-        <button
-          type="button"
-          onClick={() => setBits([0, 0, 0, 0, 0, 0, 0, 0])}
-          className="rounded-lg border border-neutral-300 bg-white px-3 py-1 hover:bg-neutral-100"
-        >
+        <button type="button" onClick={() => setBits([0, 0, 0, 0, 0, 0, 0, 0])} className={button}>
           Reset
         </button>
       </div>
-      <p className="text-xs text-neutral-500">
+      <p className="text-xs text-neutral-600">
         Range here: {signed ? '-128 to 127' : '0 to 255'}. Try switching every bit on.
       </p>
     </Widget>

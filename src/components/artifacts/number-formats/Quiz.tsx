@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { button } from './ui';
 
 type Question = { q: string; options: string[]; answer: number; why: string };
 
@@ -56,17 +57,17 @@ export default function Quiz() {
       {QUESTIONS.map((item, qi) => {
         const choice = picked[qi];
         return (
-          <div key={qi} className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-            <p className="font-medium text-neutral-900">
+          <div key={qi} className="border border-neutral-400 bg-white p-4">
+            <p className="font-display font-bold text-neutral-900">
               {qi + 1}. {item.q}
             </p>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               {item.options.map((opt, oi) => {
-                let style = 'border-neutral-300 bg-white hover:bg-neutral-100';
+                let style = 'border-neutral-500 bg-white hover:bg-neutral-200';
                 if (choice !== null) {
-                  if (oi === item.answer) style = 'border-emerald-400 bg-emerald-50';
-                  else if (oi === choice) style = 'border-rose-300 bg-rose-50';
-                  else style = 'border-neutral-200 bg-white opacity-60';
+                  if (oi === item.answer) style = 'border-2 border-black bg-black text-white font-bold';
+                  else if (oi === choice) style = 'border-dashed border-neutral-600 bg-white line-through';
+                  else style = 'border-neutral-300 bg-white text-neutral-500';
                 }
                 return (
                   <button
@@ -74,7 +75,7 @@ export default function Quiz() {
                     type="button"
                     disabled={choice !== null}
                     onClick={() => setPicked((p) => p.map((v, i) => (i === qi ? oi : v)))}
-                    className={`rounded-lg border px-3 py-2 text-left text-sm ${style}`}
+                    className={`border px-3 py-2 text-left text-sm ${style}`}
                   >
                     {opt}
                   </button>
@@ -82,8 +83,8 @@ export default function Quiz() {
               })}
             </div>
             {choice !== null && (
-              <p className="mt-3 text-sm text-neutral-600">
-                <span className="font-medium">{choice === item.answer ? 'Correct. ' : 'Not quite. '}</span>
+              <p className="mt-3 border-t border-neutral-400 pt-3 text-sm text-neutral-700">
+                <span className="font-display font-bold">{choice === item.answer ? 'Correct. ' : 'Not quite. '}</span>
                 {item.why}
               </p>
             )}
@@ -92,15 +93,11 @@ export default function Quiz() {
       })}
 
       {answered === QUESTIONS.length && (
-        <div className="flex items-center justify-between rounded-xl bg-neutral-900 px-4 py-3 text-white">
-          <span>
+        <div className="flex items-center justify-between border-t-[3px] border-black bg-white px-4 py-3">
+          <span className="font-display font-bold">
             You got {score} out of {QUESTIONS.length}.
           </span>
-          <button
-            type="button"
-            onClick={() => setPicked(QUESTIONS.map(() => null))}
-            className="rounded-lg border border-white/30 px-3 py-1 text-sm hover:bg-white/10"
-          >
+          <button type="button" onClick={() => setPicked(QUESTIONS.map(() => null))} className={button}>
             Try again
           </button>
         </div>
