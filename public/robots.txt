@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://irfani.me/sitemap-index.xml

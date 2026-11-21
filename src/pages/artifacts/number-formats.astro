@@ -129,6 +129,10 @@ const contents = [
           watch what each format does.
         </p>
         <MemoryCalculator client:load />
+        <p>
+          Work it out by hand for 70 billion parameters: FP32 needs 280 GB, FP16 needs 140 GB, INT8 needs 70 GB, and
+          INT4 needs 35 GB.
+        </p>
         <p>Fewer bytes per number means a smaller model. So the goal is clear: use fewer bytes.</p>
       </Bite>
 
@@ -144,6 +148,9 @@ const contents = [
           switch is worth a different amount: 1, 2, 4, 8, and so on. Add up the switches that are on.
         </p>
         <IntBits client:load />
+        <p>
+          Example: the bits 01001010 are 64 + 8 + 2 = 74. The interactive bit row above lets you check any pattern.
+        </p>
         <p>
           With 8 bits there are 2<sup>8</sup> = 256 patterns. That is why INT8 can hold only 256 different values.
           And they are whole numbers only.
@@ -175,6 +182,10 @@ const contents = [
         </p>
         <FloatAnatomy client:load />
         <p>
+          Example: 0.15625 in FP32 has sign 0 (positive), exponent 124 (124 − 127 = −3, so the scale is 2<sup>-3</sup>),
+          and a mantissa that gives 0.25. So 1.25 × 2<sup>-3</sup> = 0.15625.
+        </p>
+        <p>
           Now switch to FP16 and BF16 above. Same idea, but the bits are split in different ways. Look at how many
           bits the exponent and the mantissa get.
         </p>
@@ -200,6 +211,10 @@ const contents = [
         </p>
         <RangeVsPrecision client:load />
         <p>
+          Example: 70000 is too big for FP16 (its biggest value is 65,504), so FP16 turns it into infinity. FP32 and
+          BF16 both store it, though BF16 rounds it.
+        </p>
+        <p>
           Notice that 0.1 is never exact in any format. Computers count in 2s, and 0.1 does not fit neatly. More
           mantissa bits just get closer.
         </p>
@@ -211,6 +226,17 @@ const contents = [
           with the reason. Your score is not saved.
         </p>
         <Quiz client:load />
+        <div class="border-t border-black pt-4 text-sm">
+          <h3 class="font-display text-xs font-bold uppercase tracking-[0.12em]">Answer key</h3>
+          <ol class="mt-2 list-decimal space-y-1 pl-5">
+            <li>14 GB. 7 billion × 2 bytes = 14 GB.</li>
+            <li>The exponent. It sets the scale, so more exponent bits give a wider range.</li>
+            <li>It has more exponent bits, so it has a wider range.</li>
+            <li>BF16. It has only 7 mantissa bits.</li>
+            <li>It becomes infinity. The biggest FP16 value is 65,504.</li>
+            <li>256. 2<sup>8</sup> = 256.</li>
+          </ol>
+        </div>
       </Bite>
 
       <p class="mt-12 border-t border-black pt-4 text-sm italic text-neutral-700">

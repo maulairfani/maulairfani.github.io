@@ -1,6 +1,6 @@
 ---
 import '../styles/global.css';
-import { artifacts } from '../data/artifacts';
+import { publishedGuides } from '../data/guides';
 
 const title = 'Maula Irfani';
 const description = "I'm an AI/ML engineer based in Jakarta, and this is where I share my little experiments.";
@@ -37,21 +37,26 @@ const description = "I'm an AI/ML engineer based in Jakarta, and this is where I
       </header>
 
       <section class="mt-12 border-t-[3px] border-black pt-4">
-        <h2 class="font-label text-[11px] font-bold uppercase tracking-[0.12em]">Study Guides</h2>
+        <h2 class="font-label text-[11px] font-bold uppercase tracking-[0.12em]">
+          <a href="/guides/" class="underline underline-offset-4 hover:no-underline">Study Guides</a>
+        </h2>
         <ul class="mt-4 border-t border-neutral-400">
           {
-            artifacts.map((a) => (
+            publishedGuides.map((g) => (
               <li class="border-b border-neutral-400">
-                <a href={`/artifacts/${a.slug}/`} class="group block py-4">
+                <a href={g.path} class="group block py-4">
                   <span class="font-display text-lg font-bold leading-snug group-hover:underline underline-offset-4">
-                    {a.title}
+                    {g.title}
                   </span>
-                  <span class="mt-1 block text-sm text-neutral-700">{a.description}</span>
+                  <span class="mt-1 block text-sm text-neutral-700">{g.description}</span>
                 </a>
               </li>
             ))
           }
         </ul>
+        <p class="mt-4 font-label text-xs uppercase tracking-[0.12em]">
+          <a href="/guides/" class="underline underline-offset-4 hover:no-underline">All guides →</a>
+        </p>
       </section>
     </main>
   </body>
