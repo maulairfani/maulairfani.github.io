@@ -21,6 +21,13 @@ export const guides: Guide[] = [
     description: 'A small, interactive guide to how computers store numbers, and why it matters for model size.',
     tags: ['quantization', 'number formats', 'machine learning'],
   },
+  {
+    slug: 'llm-inference-fundamentals',
+    title: 'LLM Inference Fundamentals',
+    description: 'A narrative study guide to LLM inference, with step-by-step explanations and an offline memory calculator.',
+    tags: ['llm', 'inference', 'machine learning'],
+    updated: '2026-11-21',
+  },
 ];
 
 export const publishedGuides = guides

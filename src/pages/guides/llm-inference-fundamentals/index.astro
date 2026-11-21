@@ -1,0 +1,479 @@
+---
+import '../../../styles/global.css';
+import MemoryLab from '../../../components/artifacts/llm-inference-fundamentals/MemoryLab.tsx';
+import Sources from '../../../components/Sources.astro';
+
+const sources = [
+  {
+    title: 'Hugging Face: How caching works',
+    url: 'https://huggingface.co/docs/transformers/en/cache_explanation',
+    note: 'Per-layer K/V reuse, causal attention, and incremental generation.',
+  },
+  {
+    title: 'Ainslie et al.: GQA',
+    url: 'https://arxiv.org/abs/2305.13245',
+    note: 'Query/KV head sharing and the relationship between MHA, GQA, and MQA.',
+  },
+  {
+    title: 'vLLM: Optimization and tuning',
+    url: 'https://docs.vllm.ai/en/latest/configuration/optimization/',
+    note: 'Chunked prefill, performance trade-offs, cache allocation, and preemption. Defaults are version-specific; this guide intentionally does not prescribe flags.',
+  },
+];
+
+const title = 'LLM Inference Fundamentals';
+const description =
+  'A narrative study guide to LLM inference, with step-by-step explanations and an offline memory calculator.';
+
+const contents = [
+  { id: 'lesson-1', label: 'From Prompt to Answer' },
+  { id: 'lesson-2', label: 'Understanding KV Cache' },
+  { id: 'lesson-3', label: 'Budgeting GPU Memory' },
+  { id: 'lesson-4', label: 'Using the GPU Efficiently' },
+  { id: 'lesson-5', label: 'Handling Multiple Requests' },
+  { id: 'lesson-6', label: 'Measuring and Improving Performance' },
+  { id: 'lesson-7', label: 'Building a Predictable Service' },
+  { id: 'lesson-8', label: 'Putting It All Together' },
+];
+
+const figures = {
+  1: {
+    src: '/guides/llm-inference-fundamentals/figure-1.webp',
+    alt: 'Prefill processes the prompt together. Decode processes the latest token using cached context.',
+  },
+  2: {
+    src: '/guides/llm-inference-fundamentals/figure-2.webp',
+    alt: 'Three tokens store three K/V packages, but causal attention computes six visible pairs.',
+  },
+  3: {
+    src: '/guides/llm-inference-fundamentals/figure-3.webp',
+    alt: 'A finishes, B and C continue, and D can be admitted to the freed capacity.',
+  },
+};
+
+const label = 'font-label text-[11px] font-bold uppercase tracking-[0.12em]';
+const boxTitle = 'font-display text-xs font-bold uppercase tracking-[0.12em]';
+const formula = 'border border-neutral-500 bg-white px-4 py-3 text-center font-label text-sm';
+const questionCls = 'mt-3 cursor-pointer font-display text-sm font-bold';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+  </head>
+  <body class="bg-white font-body text-neutral-900 antialiased">
+    <main class="mx-auto max-w-2xl px-5 pb-12 pt-10 sm:pt-16">
+      <nav class="font-label text-xs uppercase tracking-[0.12em]">
+        <a href="/" class="underline underline-offset-4 hover:no-underline">← Maula Irfani</a>
+      </nav>
+
+      <header class="mt-6 border-t-[6px] border-black pt-3">
+        <p class={label}>AI engineering · A guided lesson</p>
+        <h1 class="mt-3 font-display text-4xl font-bold leading-[1.1] tracking-tight">{title}</h1>
+        <p class="mt-4 font-body text-lg leading-relaxed text-neutral-800">
+          Follow one request from its first token to a shared service. Understand why inference needs memory, why
+          batching changes speed, and how to decide whether an optimization actually helps.
+        </p>
+        <dl class="mt-5 grid grid-cols-[115px_minmax(0,1fr)] gap-x-3 gap-y-1 text-sm">
+          <dt class="font-display font-bold">For</dt>
+          <dd>Readers who know that an LLM has weights but are new to inference engines.</dd>
+          <dt class="font-display font-bold">Before reading</dt>
+          <dd>Basic familiarity with vectors and model layers is helpful. No engine setup or prior knowledge of KV cache is required.</dd>
+          <dt class="font-display font-bold">Scope</dt>
+          <dd>Standard autoregressive decoder inference and full-context K/V caching. Architecture-specific exceptions are identified where they matter.</dd>
+        </dl>
+      </header>
+
+      <section class="mt-10 space-y-3 text-neutral-800 leading-relaxed">
+        <h2 class="font-display text-2xl font-bold leading-tight text-neutral-900">Follow the work, not just the vocabulary</h2>
+        <p>One request becomes an answer. Then we add caching, a memory budget, and other users. Each new problem introduces the next mechanism.</p>
+        <p>Read in order if inference is new. Use the figures to check your mental model, then explore the memory lab. All numerical scenarios are hypothetical, not benchmarks.</p>
+      </section>
+
+      <nav class="mt-10 border-t border-black pt-4" aria-labelledby="contents-title">
+        <h2 id="contents-title" class={label}>Contents</h2>
+        <ol class="mt-3 grid gap-x-8 text-sm sm:grid-cols-2">
+          {
+            contents.map((c, i) => (
+              <li class="border-b border-neutral-300 py-1.5">
+                <a href={`#${c.id}`} class="underline underline-offset-4 hover:no-underline">
+                  <span class="font-label text-neutral-500">{i + 1}.</span> {c.label}
+                </a>
+              </li>
+            ))
+          }
+        </ol>
+      </nav>
+
+      <!-- Chapter 1 -->
+      <section id="lesson-1" class="mt-12 border-t-[3px] border-black pt-4">
+        <p class={label}>Chapter 1</p>
+        <h2 class="mt-2 font-display text-3xl font-bold leading-tight">From Prompt to Answer</h2>
+
+        <section class="mt-8 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">A prompt arrives. What actually runs?</h3>
+          <p>You send a prompt to a small assistant, and words appear. What looks like one operation actually involves three responsibilities.</p>
+          <p>The <strong>model</strong> contains an architecture and learned weights. The architecture defines the operations and connections. The weights are the numerical values used in those operations. Together, they determine how input is transformed into predictions.</p>
+          <p>The <strong>inference engine</strong> runs those operations on hardware. It loads weights, executes tensor operations, manages memory, and may schedule work from multiple requests. The <strong>serving layer</strong> exposes that execution to users through an API, accepts requests, and returns responses. A single product can implement both engine and serving functions, so these are responsibilities rather than necessarily separate programs.</p>
+          <aside class="border border-l-[7px] border-black bg-white px-4 py-3">
+            <p class={boxTitle}>The first mental model</p>
+            <p class="mt-1">The model determines what is computed. The engine determines how it is executed. Serving determines how users access it.</p>
+          </aside>
+        </section>
+
+        <section class="mt-10 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">The model sees tokens, not the sentence you see</h3>
+          <p>Suppose the prompt is “Explain why the sky looks blue.” Before model execution, a tokenizer converts that text into token IDs. A token is not necessarily a word. Depending on the tokenizer and text, it can represent a whole word, a fragment, punctuation, or another text unit.</p>
+          <p>The model turns token IDs into numerical representations and transforms them through its layers. Its next-token output is not immediately a word. It is a set of scores, called <strong>logits</strong>, over possible next tokens.</p>
+          <p>A selection rule then chooses a token. Greedy decoding picks the highest-scoring candidate. Sampling chooses according to a probability distribution, potentially adjusted by settings such as temperature. We will not study those settings deeply here. The important distinction is that producing scores and choosing a token are separate steps.</p>
+        </section>
+
+        <section class="mt-10 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">Forward pass is the operation; prefill and decode are the stages</h3>
+          <p>You may already know the term <strong>forward pass</strong>. It means running inputs through the model to obtain outputs. It does not update the weights. During training, weight updates require additional work, including backward computation and an optimizer step.</p>
+          <p>Prefill processes the prompt. If our prompt contains five tokens, those positions can be processed together in a forward pass. Causal attention restricts each position to itself and earlier positions, so parallel processing does not let a token look into the future. The final prompt position provides the logits used to select the first output token. Prefill also builds the prompt's KV cache, which we will explain in Part II.</p>
+          <p>After the first output token has been selected, the system must predict the next one. With a KV cache, a standard decode step processes the newly selected token and reuses context information from previous positions. Its logits are used to choose another token. The loop repeats until a stopping condition is met, such as an end-of-sequence token or an output limit.</p>
+          <p>There is a subtle distinction here: <em>selecting</em> a token and <em>processing</em> it are different events. The first output token is selected from prefill results. It becomes the input to the next decode pass. If generation stops immediately after selecting a final token, that final token may never need to be processed or added to the cache.</p>
+          <figure class="space-y-2">
+            <a href={figures[1].src} target="_blank" rel="noopener noreferrer" class="block">
+              <img src={figures[1].src} alt={figures[1].alt} loading="lazy" class="w-full border border-neutral-400" />
+            </a>
+            <figcaption class="text-sm text-neutral-700">
+              <strong>Figure 1.</strong> The first output token F is selected after prefill; processing F predicts G. F's K/V participate in its own attention and are retained for later steps. Visual generated with Microsoft Copilot.
+            </figcaption>
+          </figure>
+        </section>
+
+        <section class="mt-10 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">Why prompt length and answer length create different work</h3>
+          <p>The assistant works. Now make either its prompt or its answer longer. These changes create different work.</p>
+          <p>A longer prompt gives prefill more input positions to process. A longer answer requires more decode steps. Within one ordinary autoregressive response, the next selected token depends on earlier selected tokens, so the engine cannot simply generate every future token independently in one batch.</p>
+          <p>At this point, a natural concern appears. If every new token needs the previous context, do we have to run the entire prompt again for every prediction? A naive implementation can repeat a great deal of work. The next part explains what can be saved instead.</p>
+          <details class="border border-neutral-400 bg-neutral-100 px-4 py-3">
+            <summary class={questionCls}>A long prompt and a short answer: where is the main added work?</summary>
+            <p class="mt-2">The long prompt adds prefill work. It also creates a larger context for the few decode steps that follow. A short answer limits the number of those steps, but does not erase the context cost.</p>
+          </details>
+          <div class="border border-l-[7px] border-black bg-white px-4 py-3">
+            <p class={boxTitle}>Keep this distinction</p>
+            <p class="mt-1">Prompt length adds initial work. Answer length adds steps. Both affect the context used during decode.</p>
+          </div>
+        </section>
+      </section>
+
+      <!-- Chapter 2 -->
+      <section id="lesson-2" class="mt-12 border-t-[3px] border-black pt-4">
+        <p class={label}>Chapter 2</p>
+        <h2 class="mt-2 font-display text-3xl font-bold leading-tight">Understanding KV Cache</h2>
+
+        <section class="mt-8 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">Attention: what is the new token looking for?</h3>
+          <p>At each attention layer, token representations are projected into <strong>queries (Q)</strong>, <strong>keys (K)</strong>, and <strong>values (V)</strong>.</p>
+          <p>The query is compared with visible keys to produce scores. Those scores are scaled and normalized with softmax into attention weights. The weights are then used to combine the corresponding values. This produces information used by the rest of the layer.</p>
+          <p>Read the formula as three steps: compare Q with K, normalize, then combine V. The causal mask blocks future positions.</p>
+          <p class={formula}>Attention(Q, K, V) = softmax(QK<sup>T</sup> / sqrt(d<sub>head</sub>) + causal mask) V</p>
+        </section>
+
+        <section class="mt-10 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">Why earlier K and V can be reused</h3>
+          <p>Under causal attention, A could not see B, C, or D. B could not see C or D. C could not see D. Adding D does not change what those earlier positions were allowed to see. In standard causal inference, with the same model and positional interpretation, their earlier representations do not need to be recomputed just because a later token arrived.</p>
+          <p>That makes their per-layer keys and values reusable. Instead of regenerating K/V for A, B, and C, the engine stores them. When D is processed, it computes D's new K/V, combines them with the stored K/V, and performs attention for D.</p>
+          <p>This stored state is the <strong>KV cache</strong>. It is not a cache of complete answers, and it is not a store of text snippets. It holds numerical tensors derived from previously processed positions, separately at the relevant layers.</p>
+          <aside class="border border-l-[7px] border-black bg-white px-4 py-3">
+            <p class={boxTitle}>What the cache buys</p>
+            <p class="mt-1">It avoids recomputing past K/V. It does not remove the need for the new token to use the past context.</p>
+          </aside>
+        </section>
+
+        <section class="mt-10 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">Why not keep old Q or attention scores?</h3>
+          <p>Standard KV caching does not save the full history of attention scores. Old Q is unnecessary because we are not asking for a new output at the old positions. We only need the new position's query to compute the new position's attention output.</p>
+          <p>For D, its Q is compared with the keys for A, B, C, and D. These are new comparisons. D's query is different from C's query, so C's old scores cannot simply be used as D's scores. After normalization, D's weights combine the corresponding values.</p>
+          <p>This distinction explains why decode is not free after prefill. We removed repeated work on old representations, but we still have to read the cache and compute attention for every new position.</p>
+          <details class="border border-neutral-400 bg-neutral-100 px-4 py-3">
+            <summary class={questionCls}>What changes when E arrives: all past K/V, or the query and attention calculation for E?</summary>
+            <p class="mt-2">In the standard cached causal model, past K/V are reused. E has new Q/K/V, computes its own attention over the visible context, and contributes its K/V to the cache.</p>
+          </details>
+        </section>
+
+        <section class="mt-10 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">Linear storage, quadratic relationships</h3>
+          <p>Three tokens store three K/V packages. Six tokens store six: linear growth. Causal prefill compares all visible pairs, giving 6 pairs for three tokens and 21 for six: quadratic growth. One new decode query compares with the context once: linear pair count.</p>
+          <p>A square attention matrix can suggest quadratic cache growth. But storing token state is different from computing relationships between tokens.</p>
+          <p>For one decode query, only one query is new. If it sees three keys, there are three comparisons; if it sees six, there are six. That is linear in the context length for this attention step.</p>
+          <p>These statements refer to different quantities. KV storage is linear for a fixed full-context architecture and precision. Prefill attention pair count is quadratic. One decode query's pair count is linear. They do not say that every model operation has the same scaling, or that an implementation must store a complete square score matrix.</p>
+          <figure class="space-y-2">
+            <a href={figures[2].src} target="_blank" rel="noopener noreferrer" class="block">
+              <img src={figures[2].src} alt={figures[2].alt} loading="lazy" class="w-full border border-neutral-400" />
+            </a>
+            <figcaption class="text-sm text-neutral-700">
+              <strong>Figure 2.</strong> The package picture is per layer and KV head. Each position sees itself and earlier positions. Standard KV caching retains K/V, not the full score history. Visual generated with Microsoft Copilot.
+            </figcaption>
+          </figure>
+          <aside class="border border-l-[7px] border-black bg-white px-4 py-3">
+            <p class={boxTitle}>Limits of this model</p>
+            <p class="mt-1">Efficient attention can avoid materializing the full score matrix. Sliding-window, hybrid, compressed, and other architectures can have different cache behavior. The memory calculator later assumes standard full-context K/V storage.</p>
+          </aside>
+          <div class="border border-l-[7px] border-black bg-white px-4 py-3">
+            <p class={boxTitle}>Keep this distinction</p>
+            <p class="mt-1">Cache stores one state package per token. Attention computes relationships between positions.</p>
+          </div>
+        </section>
+      </section>
+
+      <!-- Chapter 3 -->
+      <section id="lesson-3" class="mt-12 border-t-[3px] border-black pt-4">
+        <p class={label}>Chapter 3</p>
+        <h2 class="mt-2 font-display text-3xl font-bold leading-tight">Budgeting GPU Memory</h2>
+
+        <section class="mt-8 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">One more architecture detail: query heads versus KV heads</h3>
+          <p>In conventional <strong>multi-head attention (MHA)</strong>, each query head has its own corresponding K/V head. A hypothetical model with 32 query heads could therefore have 32 KV heads.</p>
+          <p>In <strong>grouped-query attention (GQA)</strong>, several query heads share one K/V set. With 32 query heads and eight KV heads, each group of four query heads uses the same keys and values. Their outputs can still differ because each query is different and produces different attention weights.</p>
+          <p>In <strong>multi-query attention (MQA)</strong>, all query heads share one KV head. These designs change how much K/V needs to be stored and accessed. The number called “attention heads” in a model configuration often refers to query heads, so do not assume it is the cache-head count.</p>
+        </section>
+
+        <section class="mt-10 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">Weights fit. Why can memory still run out?</h3>
+          <p>The missing piece is that weights are only one component. Inference also needs KV caches, intermediate activations, temporary buffers, and engine overhead. Some allocations depend on execution shape and engine features. A file's size on disk is not a complete estimate of resident inference memory.</p>
+          <p>Weights are normally shared by requests using the same model instance. Three active requests do not require three copies of those weights. But their contexts are separate, so each needs context state. Some engines can share identical cached prefixes, but we will assume no sharing for simple budgeting.</p>
+          <p>A request's cache grows as more positions are processed. That includes prompt positions and generated tokens fed back through decode. Therefore memory can grow while the answer is being produced, not only when the request arrives.</p>
+          <p class={formula}>Inference memory ≈ resident weights + active KV caches + working memory and overhead</p>
+          <details class="border border-neutral-400 bg-neutral-100 px-4 py-3">
+            <summary class={questionCls}>Which uses more cache: ten requests or two requests?</summary>
+            <p class="mt-2">You cannot tell from request count alone. You also need their stored token counts and cache structure. Two very long contexts can use more cache than ten short ones.</p>
+          </details>
+        </section>
+
+        <section class="mt-10 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">Bits and bytes before the memory formula</h3>
+          <p>A bit holds a binary value. A byte contains eight bits. Therefore a 16-bit value occupies two bytes, and a 32-bit value occupies four bytes. The lowercase b and uppercase B distinguish bits and bytes in unit names.</p>
+          <p>FP32 uses 32 bits per value. FP16 and BF16 each use 16 bits, although they represent numbers differently. INT8 uses eight bits. A raw four-bit payload is half a byte per value, so two such values can be packed into one byte.</p>
+          <p>The raw estimate is not the final allocation. Quantized formats need scales or other metadata, some tensors may retain higher precision, and runtime layouts can differ. Also, quantized weights do not automatically imply quantized KV cache. Weight precision and cache precision are separate facts to inspect.</p>
+          <p class={formula}>Raw weight bytes ≈ parameter count × bits per parameter / 8</p>
+        </section>
+
+        <section class="mt-10 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">Build the KV formula one factor at a time</h3>
+          <p>Let us derive the formula rather than start with it. For one token at one layer, we store K and V. That gives the factor two. Each has a vector for every KV head. Each vector contains a fixed number of elements, called the head dimension. Each element uses some number of bytes.</p>
+          <p>Use a hypothetical model with 32 layers, eight KV heads, head dimension 128, and FP16 cache. K and V give two; FP16 gives two bytes per element. The multiplication gives 131,072 bytes, or 128 KiB, per cached token.</p>
+          <p>At 4,096 tokens, that is 512 MiB. At 8,192 tokens, it is one GiB. Three requests each storing 8,192 tokens need three GiB of cache payload. The weights remain shared, while the cache allowance grows with the workload.</p>
+          <p class={formula}>Cache bytes/token = 2 × layers × KV heads × head dimension × bytes/element</p>
+          <aside class="border border-l-[7px] border-black bg-white px-4 py-3">
+            <p class={boxTitle}>Hypothetical calculation</p>
+            <p class="mt-1">2 × 32 × 8 × 128 × 2 = 131,072 bytes/token = 128 KiB/token. Multiply by stored tokens to get cache payload.</p>
+          </aside>
+        </section>
+
+        <section class="mt-10 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">Explore the budget, then question its assumptions</h3>
+          <p>Now test the mechanism. Move a slider and watch which part of the budget grows. The weights stay shared; each request adds its own token state.</p>
+          <p>The default model uses 128 KiB of cache per token. Each request budgets 8,192 tokens, or 1 GiB. The lab estimates memory, not speed or safe production capacity.</p>
+          <div id="memory-lab" class="border border-neutral-400 bg-white p-0">
+            <div class="border-b border-neutral-400 px-4 py-3">
+              <p class={boxTitle}>Memory lab / change one thing</p>
+              <p class="mt-1 text-sm">Can three requests fit? Start with the example, then double the load or extend the context.</p>
+            </div>
+            <div class="p-0">
+              <MemoryLab client:load />
+            </div>
+          </div>
+          <aside class="border border-l-[7px] border-black bg-white px-4 py-3">
+            <p class={boxTitle}>What is excluded</p>
+            <p class="mt-1">Prefix sharing, block rounding, architecture-specific caches, quantization metadata in raw weight estimates, offload, and measured runtime overhead. A positive result is not a guarantee that inference fits.</p>
+          </aside>
+          <details class="border border-neutral-400 bg-neutral-100 px-4 py-3">
+            <summary class={questionCls}>Why not allocate all remaining memory to prompts immediately?</summary>
+            <p class="mt-2">Generation adds context state, and runtime work needs headroom. A budget that ignores future output or temporary allocations can fail after requests have already started.</p>
+          </details>
+        </section>
+      </section>
+
+      <!-- Chapter 4 -->
+      <section id="lesson-4" class="mt-12 border-t-[3px] border-black pt-4">
+        <p class={label}>Chapter 4</p>
+        <h2 class="mt-2 font-display text-3xl font-bold leading-tight">Using the GPU Efficiently</h2>
+
+        <section class="mt-8 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">A large memory is not a fast execution</h3>
+          <p>The model fits, yet it is slow. Storing data and using it are different capabilities.</p>
+          <p><strong>Capacity</strong> is how much memory is available. <strong>Memory bandwidth</strong> is how quickly data can be moved through a memory interface. <strong>Compute throughput</strong> is how much numerical work the hardware can perform per unit time. A system can have plenty of capacity while waiting on data movement or computation.</p>
+          <p>We call the first pattern compute-bound and the second memory-bandwidth-bound. Real workloads can move between them, and overhead can create other limits. The labels are hypotheses about execution, not properties permanently attached to a model.</p>
+        </section>
+
+        <section class="mt-10 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">Why prefill and small-batch decode often behave differently</h3>
+          <p>During prefill, many input positions are available together. When the engine reads a tile of weights, it can use that data for calculations involving multiple token positions. This creates substantial computation relative to the data moved.</p>
+          <p>During decode for one request, only one new position is available in the ordinary generation step. The model still accesses the weights used by its layers, but there is less token work to perform from each weight read. It also reads context K/V for attention.</p>
+          <p>Long contexts can add significant attention work and cache traffic. Larger batches can increase reuse. Different models and hardware can change the balance. The useful habit is to ask how much computation is obtained from the data being moved, then verify the limiting resource when tuning.</p>
+          <p class="text-sm"><a href="#sources" class="underline underline-offset-4">Mechanism reference: source 3</a>.</p>
+          <details class="border border-neutral-400 bg-neutral-100 px-4 py-3">
+            <summary class={questionCls}>Why can processing several positions together be more efficient?</summary>
+            <p class="mt-2">A piece of weight data can support calculations for multiple positions before it must be fetched again at the relevant memory level. More useful computation is obtained from data movement. This is an opportunity for efficiency, not a guarantee of lower latency.</p>
+          </details>
+        </section>
+      </section>
+
+      <!-- Chapter 5 -->
+      <section id="lesson-5" class="mt-12 border-t-[3px] border-black pt-4">
+        <p class={label}>Chapter 5</p>
+        <h2 class="mt-2 font-display text-3xl font-bold leading-tight">Handling Multiple Requests</h2>
+
+        <section class="mt-8 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">Add two users: batching without mixing conversations</h3>
+          <p>Now a second and third request arrive. Request A asks for an explanation, B asks for an email, and C asks for a summary. Their contexts are independent. Batching must not let A attend to B's private prompt.</p>
+          <p>What can be combined is execution work. At a decode step, the engine can process a new position from A, one from B, and one from C together. The same resident weights are used across the work, while each request accesses its own context state.</p>
+          <p>This gives the GPU more useful work per batch and can improve aggregate throughput. But A's next token still depends on A's previous selected token. Batching does not remove sequential dependence inside a response.</p>
+        </section>
+
+        <section class="mt-10 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">Requests do not finish together</h3>
+          <p>In a simple static batch, membership is fixed for that batch. New requests wait for the batch to finish rather than replacing completed members immediately. This can leave useful execution opportunity unused while long requests continue.</p>
+          <p>Continuous batching updates active work at scheduling boundaries. A can leave when it finishes, and D can be admitted while B and C continue. The engine does not need all members to begin and end together.</p>
+          <p>Notice that D does not automatically accelerate B or C. It adds work and may improve overall hardware use. Whether existing users see better or worse token timing depends on the resulting execution and scheduling.</p>
+          <figure class="space-y-2">
+            <a href={figures[3].src} target="_blank" rel="noopener noreferrer" class="block">
+              <img src={figures[3].src} alt={figures[3].alt} loading="lazy" class="w-full border border-neutral-400" />
+            </a>
+            <figcaption class="text-sm text-neutral-700">
+              <strong>Figure 3.</strong> This is a scheduling illustration, not a latency guarantee. D still needs prefill. B/C can experience interference; admission occurs at scheduling boundaries, not necessarily immediately. Visual generated with Microsoft Copilot.
+            </figcaption>
+          </figure>
+          <div class="border border-l-[7px] border-black bg-white px-4 py-3">
+            <p class={boxTitle}>Keep this distinction</p>
+            <p class="mt-1">Continuous batching changes membership. Chunked prefill controls how new prompt work shares execution.</p>
+          </div>
+        </section>
+
+        <section class="mt-10 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">A long new prompt should not monopolize every turn</h3>
+          <p>Imagine that B and C are streaming answers when D arrives with a very long prompt. If the engine spends a large uninterrupted interval processing D's entire prefill, B and C can experience a long gap before their next tokens.</p>
+          <p>Chunked prefill divides that prompt-processing work into smaller pieces. A scheduler can interleave pieces with decode work, allowing existing responses to keep advancing while the new prompt is processed.</p>
+          <p>The prompt is still one context. We are not treating its pieces as independent conversations or asking the model to forget earlier chunks. We are dividing execution work so it can be scheduled more flexibly.</p>
+          <p class="text-sm"><a href="#sources" class="underline underline-offset-4">Mechanism reference: source 3</a>.</p>
+          <details class="border border-neutral-400 bg-neutral-100 px-4 py-3">
+            <summary class={questionCls}>Does chunked prefill make a long prompt into several unrelated prompts?</summary>
+            <p class="mt-2">No. The context remains connected. The engine schedules portions of the processing work while preserving the state needed to continue the same prompt.</p>
+          </details>
+        </section>
+      </section>
+
+      <!-- Chapter 6 -->
+      <section id="lesson-6" class="mt-12 border-t-[3px] border-black pt-4">
+        <p class={label}>Chapter 6</p>
+        <h2 class="mt-2 font-display text-3xl font-bold leading-tight">Measuring and Improving Performance</h2>
+
+        <section class="mt-8 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">Give “fast” three different meanings</h3>
+          <p>A user says the assistant is slow. That observation is useful, but incomplete. Did nothing appear for a long time? Did text start quickly and then crawl? Or did the service complete too little work for all users together?</p>
+          <p><strong>Time to first token (TTFT)</strong> measures the wait before output begins. At the client, this can include transport, queueing, preprocessing, prefill, and delivery. Engine-only timing may use a narrower boundary, so state what you measured.</p>
+          <p><strong>Output throughput</strong> measures total output tokens per unit time across the measured work. It describes system productivity, not the experience of one request.</p>
+          <p>Consider hypothetical steady generation. One request produces 40 tokens per second, around 25 milliseconds between tokens. With three requests, each produces 20 tokens per second, around 50 milliseconds between tokens. Total output is now 60 tokens per second. Throughput improved, but each user's generation slowed.</p>
+          <aside class="border border-l-[7px] border-black bg-white px-4 py-3">
+            <p class={boxTitle}>Read the direction correctly</p>
+            <p class="mt-1">Lower TTFT means output starts sooner. Lower ITL means output continues sooner. Higher throughput means more total output per unit time.</p>
+          </aside>
+        </section>
+
+        <section class="mt-10 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">A fair benchmark changes one thing on purpose</h3>
+          <p>Suppose engine A is tested with one active request, while engine B is tested with three. B produces more total tokens per second. Can we attribute the improvement to B? Not yet. Both the engine and concurrency changed.</p>
+          <p>Compare A and B at concurrency one, then compare them at concurrency three. Keep the hardware, model, precision, prompt set, output lengths, and cache conditions comparable. If the goal is instead to compare complete deployments with different formats, say so and evaluate quality as well. Different experiments answer different questions.</p>
+          <p>A fixed-concurrency test also does not fully describe a live service. Real requests arrive over time, sometimes in bursts. To understand queueing, test arrival patterns and measure waiting from the user's perspective, not only active engine execution.</p>
+          <details class="border border-neutral-400 bg-neutral-100 px-4 py-3">
+            <summary class={questionCls}>Why does equal output length matter when comparing decode?</summary>
+            <p class="mt-2">It controls the number of decode steps and helps keep the growth of context comparable. Otherwise one test may spend more time decoding at larger contexts than another.</p>
+          </details>
+        </section>
+
+        <section class="mt-10 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">A symptom is not yet a bottleneck diagnosis</h3>
+          <p>We increase concurrency and observe that throughput barely changes, while ITL gets worse. This supports a practical conclusion: extra concurrency provides little benefit in this tested configuration. It does not prove that compute is fully utilized.</p>
+          <p>The next step is a targeted experiment or profile. Lower concurrency while keeping workload comparable. If throughput stays nearly the same and ITL improves, the lower setting may be preferable for interactive use. Then check queue time, because less active work can increase waiting outside the engine.</p>
+          <p>Likewise, a longer prompt that increases TTFT shows sensitivity to prompt work, but does not by itself identify a specific hardware bottleneck. A useful investigation separates what was observed, what is hypothesized, and what evidence would distinguish the hypotheses.</p>
+          <p class="text-sm"><a href="#sources" class="underline underline-offset-4">Mechanism reference: source 3</a>.</p>
+        </section>
+      </section>
+
+      <!-- Chapter 7 -->
+      <section id="lesson-7" class="mt-12 border-t-[3px] border-black pt-4">
+        <p class={label}>Chapter 7</p>
+        <h2 class="mt-2 font-display text-3xl font-bold leading-tight">Building a Predictable Service</h2>
+
+        <section class="mt-8 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">A good average can hide unhappy users</h3>
+          <p>We need a target for “acceptable.” A service-level objective, or SLO, turns that judgment into a measurable goal. For example: 95% of eligible requests should receive a first token within three seconds, including queue time, over a specified reporting window.</p>
+          <p>A mean TTFT of one second does not prove that target is met. The mean adds all waits and divides by request count. Very fast requests can offset slow ones without telling us how many users crossed the threshold.</p>
+          <p>This is why the best concurrency setting depends on the application. A batch job may value total throughput. An interactive assistant may prioritize first output and smooth continuation. The target makes the trade-off explicit.</p>
+          <aside class="border border-l-[7px] border-black bg-white px-4 py-3">
+            <p class={boxTitle}>Hypothetical counterexample</p>
+            <p class="mt-1">(90 × 0.5 + 10 × 5.5) / 100 = 1 second average. Only 90 of 100 requests meet the three-second threshold.</p>
+          </aside>
+          <div class="border border-l-[7px] border-black bg-white px-4 py-3">
+            <p class={boxTitle}>Keep this distinction</p>
+            <p class="mt-1">Judge the whole wait: first output, continuation, queueing, and failures.</p>
+          </div>
+        </section>
+
+        <section class="mt-10 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">Three active slots do not control 100 arrivals</h3>
+          <p>Our service permits three active requests. One user sends 100 at once. The active limit does not decide what happens to the other 97. Without additional policy, they can fill a queue and make everyone else wait.</p>
+          <p>Admission control decides whether new work is accepted, queued, or rejected. A queue limit bounds waiting work. A queue timeout bounds how long it remains useful to wait. Per-user active and queued limits prevent one person from occupying the whole service. Fair scheduling can take turns across users instead of draining one user's backlog first.</p>
+          <p>A hypothetical policy allows one active request and two queued requests per user, within global capacity. Of 100 simultaneous submissions from that user, one runs, two wait, and 97 are rejected if those admission slots are available. The numbers are illustrative. The lesson is that waiting should be bounded and explained.</p>
+          <p>If a user cancels, remove queued work or stop active generation and release resources no longer needed. A cancel button that only hides the answer leaves the GPU working on output nobody wants.</p>
+        </section>
+
+        <section class="mt-10 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">An occasional queue is not automatically a failure</h3>
+          <p>Traffic is rarely perfectly steady. A short burst can create a queue even when the service has enough capacity for normal demand. After the burst ends, completions catch up and the queue empties.</p>
+          <p>That can be normal and useful. A queue absorbs temporary imbalance. The question is whether waiting stays within the service target and the backlog recovers, not whether the queue is always empty.</p>
+          <p>Persistent overload is different. If comparable work arrives faster than it can be completed over time, backlog grows until a limit is reached. Increasing queue size does not increase execution capacity. It only permits more waiting.</p>
+        </section>
+
+        <section class="mt-10 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">Streaming and readiness complete the user journey</h3>
+          <p>Streaming lets the user read partial output before the full answer finishes. That makes waiting more useful, but does not automatically make model computation faster. If output arrives faster than the user reads, later text can be ready when needed; this depends on the user and content.</p>
+          <p>Before any of this works, the instance must be ready. A live API process is not necessarily a ready model. During startup, the server may exist while weights are still loading or the engine is warming up. If loading fails, inference traffic should not be routed there.</p>
+          <p>Readiness is different from capacity. An initialized engine with full active slots may still be healthy and ready in a technical sense; admission control handles the load. A deterministic out-of-memory load failure also will not be fixed by restarting the same configuration indefinitely.</p>
+        </section>
+      </section>
+
+      <!-- Chapter 8 -->
+      <section id="lesson-8" class="mt-12 border-t-[3px] border-black pt-4">
+        <p class={label}>Chapter 8</p>
+        <h2 class="mt-2 font-display text-3xl font-bold leading-tight">Putting It All Together</h2>
+
+        <section class="mt-8 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">Return to the assistant: make a decision, not just a measurement</h3>
+          <p>Consider the final hypothetical case. The model loads. One request runs smoothly. At concurrency three, throughput rises, ITL worsens, and memory remains sufficient. This is not a readiness failure or evidence of exhausted VRAM. It is a performance trade-off.</p>
+          <p>The decision depends on the service target. If first-output time, continuation latency, quality, and failure rates remain acceptable, the configuration may be worth keeping. If not, tune or change the deployment and measure again. Include queue time so an apparent engine improvement does not merely move waiting elsewhere.</p>
+          <p>This guide is a foundation rather than a deployment runbook. Sampling, quantization mechanisms and quality, GPU kernels, paged cache management, prefix caching, speculative decoding, and multi-GPU execution are useful next studies. Practical benchmarking connects the mental models here to a specific system.</p>
+          <details class="border border-neutral-400 bg-neutral-100 px-4 py-3">
+            <summary class={questionCls}>Teach back the whole chain: why can a model fit but still fail or feel slow?</summary>
+            <p class="mt-2">Weights are only part of memory; active caches and runtime work also need space. Execution can be limited by data movement, compute, or scheduling. Batching can improve aggregate work while worsening per-user latency. Queues and delivery add waiting beyond engine time. A useful service must satisfy targets across the whole path.</p>
+          </details>
+          <aside class="border border-l-[7px] border-black bg-white px-4 py-3">
+            <p class={boxTitle}>The lasting takeaway</p>
+            <p class="mt-1">An inference engine is not just a function that runs weights. It manages computation, reusable state, and competing work. A good deployment turns those mechanisms into predictable, useful service for users.</p>
+          </aside>
+        </section>
+      </section>
+
+      <p class="mt-12 border-t border-black pt-4 text-sm italic text-neutral-700">
+        Serving policies and worked scenarios are engineering explanations and hypothetical examples, not prescribed settings. Validate engine behavior against the version you actually deploy.
+      </p>
+
+      <div id="sources" class="mt-8">
+        <Sources items={sources} />
+      </div>
+    </main>
+  </body>
+</html>
