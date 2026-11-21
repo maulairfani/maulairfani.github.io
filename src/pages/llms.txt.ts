@@ -1,19 +1,13 @@
 import type { APIRoute } from 'astro';
-import { publishedGuides } from '../data/guides';
+import { SITE } from '../data/guides';
 
-export const GET: APIRoute = ({ site }) => {
-  const base = site ?? new URL('https://irfani.me');
-  const url = (path: string) => new URL(path, base).href;
-
+export const GET: APIRoute = () => {
   const lines = [
     '# Maula Irfani',
     '',
-    '> Personal site of Maula Irfani, an AI/ML engineer in Jakarta. It holds small, interactive study guides on AI and machine learning topics, written as public notes.',
+    '> Personal site of Maula Irfani, an AI/ML engineer in Jakarta. It holds small, interactive study guides on AI and machine learning topics.',
     '',
-    `## Study guides`,
-    '',
-    ...publishedGuides.map((g) => `- [${g.title}](${url(g.path)}): ${g.description}`),
-    `- [All guides](${url('/guides/')}): index of every published study guide`,
+    `- [Study guides](${new URL('/guides/', SITE).href}): index of every published study guide, with a text version of each`,
     '',
   ];
 

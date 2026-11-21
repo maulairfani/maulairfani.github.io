@@ -3,7 +3,7 @@ import { button } from './ui';
 
 type Question = { q: string; options: string[]; answer: number; why: string };
 
-const QUESTIONS: Question[] = [
+export const QUESTIONS: Question[] = [
   {
     q: 'A model has 7 billion parameters stored in FP16. About how much memory do the weights need?',
     options: ['7 GB', '14 GB', '28 GB', '3.5 GB'],
@@ -53,7 +53,7 @@ export default function Quiz() {
   const score = picked.filter((p, i) => p === QUESTIONS[i].answer).length;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5" data-quiz>
       {QUESTIONS.map((item, qi) => {
         const choice = picked[qi];
         return (

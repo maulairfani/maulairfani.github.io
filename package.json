@@ -23,6 +23,8 @@
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
-    "@astrojs/sitemap": "^3.7.6"
+    "@astrojs/sitemap": "^3.7.6",
+    "node-html-markdown": "^2.0.0",
+    "node-html-parser": "^9.0.7"
   }
 }
