@@ -43,7 +43,7 @@ const figures = {
   },
   2: {
     src: '/guides/llm-inference-fundamentals/figure-2.webp',
-    alt: 'Three tokens store three K/V packages, but causal attention computes six visible pairs.',
+    alt: 'Capacity stores weights, cache and buffers; bandwidth moves data; compute performs matrix operations.',
   },
   3: {
     src: '/guides/llm-inference-fundamentals/figure-3.webp',
@@ -203,30 +203,6 @@ const questionCls = 'mt-3 cursor-pointer font-display text-sm font-bold';
             <p class="mt-2">In the standard cached causal model, past K/V are reused. E has new Q/K/V, computes its own attention over the visible context, and contributes its K/V to the cache.</p>
           </details>
         </section>
-
-        <section class="mt-10 space-y-4 leading-relaxed text-neutral-800">
-          <h3 class="font-display text-xl font-bold">Linear storage, quadratic relationships</h3>
-          <p>Three tokens store three K/V packages. Six tokens store six: linear growth. Causal prefill compares all visible pairs, giving 6 pairs for three tokens and 21 for six: quadratic growth. One new decode query compares with the context once: linear pair count.</p>
-          <p>A square attention matrix can suggest quadratic cache growth. But storing token state is different from computing relationships between tokens.</p>
-          <p>For one decode query, only one query is new. If it sees three keys, there are three comparisons; if it sees six, there are six. That is linear in the context length for this attention step.</p>
-          <p>These statements refer to different quantities. KV storage is linear for a fixed full-context architecture and precision. Prefill attention pair count is quadratic. One decode query's pair count is linear. They do not say that every model operation has the same scaling, or that an implementation must store a complete square score matrix.</p>
-          <figure class="space-y-2">
-            <a href={figures[2].src} target="_blank" rel="noopener noreferrer" class="block">
-              <img src={figures[2].src} alt={figures[2].alt} loading="lazy" class="w-full border border-neutral-400" />
-            </a>
-            <figcaption class="text-sm text-neutral-700">
-              <strong>Figure 2.</strong> The package picture is per layer and KV head. Each position sees itself and earlier positions. Standard KV caching retains K/V, not the full score history. Visual generated with Microsoft Copilot.
-            </figcaption>
-          </figure>
-          <aside class="border border-l-[7px] border-black bg-white px-4 py-3">
-            <p class={boxTitle}>Limits of this model</p>
-            <p class="mt-1">Efficient attention can avoid materializing the full score matrix. Sliding-window, hybrid, compressed, and other architectures can have different cache behavior. The memory calculator later assumes standard full-context K/V storage.</p>
-          </aside>
-          <div class="border border-l-[7px] border-black bg-white px-4 py-3">
-            <p class={boxTitle}>Keep this distinction</p>
-            <p class="mt-1">Cache stores one state package per token. Attention computes relationships between positions.</p>
-          </div>
-        </section>
       </section>
 
       <!-- Chapter 3 -->
@@ -314,6 +290,14 @@ const questionCls = 'mt-3 cursor-pointer font-display text-sm font-bold';
           <p>During prefill, many input positions are available together. When the engine reads a tile of weights, it can use that data for calculations involving multiple token positions. This creates substantial computation relative to the data moved.</p>
           <p>During decode for one request, only one new position is available in the ordinary generation step. The model still accesses the weights used by its layers, but there is less token work to perform from each weight read. It also reads context K/V for attention.</p>
           <p>Long contexts can add significant attention work and cache traffic. Larger batches can increase reuse. Different models and hardware can change the balance. The useful habit is to ask how much computation is obtained from the data being moved, then verify the limiting resource when tuning.</p>
+          <figure class="space-y-2">
+            <a href={figures[2].src} target="_blank" rel="noopener noreferrer" class="block">
+              <img src={figures[2].src} alt={figures[2].alt} loading="lazy" class="w-full border border-neutral-400" />
+            </a>
+            <figcaption class="text-sm text-neutral-700">
+              <strong>Figure 2.</strong> Capacity, data movement, and arithmetic are distinct capabilities. Conceptual illustration, not a physical GPU layout. Visual generated with Microsoft Copilot.
+            </figcaption>
+          </figure>
           <p class="text-sm"><a href="#sources" class="underline underline-offset-4">Mechanism reference: source 3</a>.</p>
           <details class="border border-neutral-400 bg-neutral-100 px-4 py-3">
             <summary class={questionCls}>Why can processing several positions together be more efficient?</summary>
