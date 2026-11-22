@@ -28,6 +28,13 @@ export const guides: Guide[] = [
     tags: ['llm', 'inference', 'machine learning'],
     updated: '2026-11-21',
   },
+  {
+    slug: 'speculative-decoding',
+    title: 'Speculative Decoding',
+    description: 'Learn original speculative decoding, Medusa, EAGLE, and LayerSkip with step-by-step interactive labs.',
+    tags: ['llm', 'inference', 'speculative decoding', 'machine learning'],
+    updated: '2026-11-22',
+  },
 ];
 
 export const publishedGuides = guides

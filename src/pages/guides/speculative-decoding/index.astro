@@ -1,0 +1,848 @@
+---
+import '../../../styles/global.css';
+import OriginalRoundLab from '../../../components/artifacts/speculative-decoding/OriginalRoundLab.tsx';
+import SamplingLab from '../../../components/artifacts/speculative-decoding/SamplingLab.tsx';
+import MedusaTreeLab from '../../../components/artifacts/speculative-decoding/MedusaTreeLab.tsx';
+import EagleFeatureLab from '../../../components/artifacts/speculative-decoding/EagleFeatureLab.tsx';
+import LayerSkipLab from '../../../components/artifacts/speculative-decoding/LayerSkipLab.tsx';
+import PerformanceLab from '../../../components/artifacts/speculative-decoding/PerformanceLab.tsx';
+import Sources from '../../../components/Sources.astro';
+import ThemeScript from '../../../components/ThemeScript.astro';
+import ThemeToggle from '../../../components/ThemeToggle.astro';
+
+const sources = [
+  {
+    title: 'Fast Inference from Transformers via Speculative Decoding',
+    url: 'https://arxiv.org/abs/2211.17192',
+    author: 'Leviathan, Kalman, and Matias',
+    note: 'First submitted 30 November 2022; ICML 2023. Original chain algorithm and exact sampling.',
+  },
+  {
+    title: 'Accelerating Large Language Model Decoding with Speculative Sampling',
+    url: 'https://arxiv.org/abs/2302.01318',
+    author: 'Chen and colleagues',
+    note: 'First submitted 2 February 2023. Parallel scoring and modified rejection sampling.',
+  },
+  {
+    title: 'Medusa: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads',
+    url: 'https://arxiv.org/html/2401.10774v3',
+    note: 'Heads, tree attention, training strategies, and acceptance choices.',
+  },
+  {
+    title: 'EAGLE: Speculative Sampling Requires Rethinking Feature Uncertainty',
+    url: 'https://arxiv.org/html/2401.15077v3',
+    note: 'Original feature-based drafting with shifted tokens and tree verification.',
+  },
+  {
+    title: 'LayerSkip: Enabling Early Exit Inference and Self-Speculative Decoding',
+    url: 'https://arxiv.org/html/2404.16710v4',
+    note: 'Training, shared early-layer work, verification, and cache reuse.',
+  },
+];
+
+const title = 'Speculative Decoding';
+const description =
+  'Learn original speculative decoding, Medusa, EAGLE, and LayerSkip with step-by-step interactive labs.';
+
+const contents = [
+  { id: 'problem', label: 'Why guess ahead?' },
+  { id: 'original', label: 'Original method: a small model drafts, the target checks' },
+  { id: 'verify', label: 'How can verification be parallel?' },
+  { id: 'sampling', label: 'Sampling needs a different acceptance rule' },
+  { id: 'medusa', label: 'Medusa: predict future positions with extra heads' },
+  { id: 'eagle', label: 'EAGLE: predict features with the selected token in view' },
+  { id: 'layerskip', label: 'LayerSkip: use early layers as the drafter' },
+  { id: 'performance', label: 'Choose a method by cost, not by its name' },
+  { id: 'recap', label: 'Teach back the whole mechanism' },
+  { id: 'sources', label: 'Sources and reading paths' },
+];
+
+const label = 'font-label text-[11px] font-bold uppercase tracking-[0.12em]';
+const boxTitle = 'font-display text-xs font-bold uppercase tracking-[0.12em]';
+const formula = 'border border-neutral-500 bg-white px-4 py-3 text-center font-label text-sm';
+const questionCls = 'cursor-pointer font-display text-sm font-bold';
+const cite = 'underline underline-offset-4 hover:no-underline';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <ThemeScript />
+  </head>
+  <body class="bg-white font-body text-neutral-900 antialiased">
+    <main class="mx-auto max-w-2xl px-5 pb-12 pt-10 sm:pt-16">
+      <nav class="flex items-center justify-between font-label text-xs uppercase tracking-[0.12em]">
+        <a href="/" class="underline underline-offset-4 hover:no-underline">← Maula Irfani</a>
+        <ThemeToggle />
+      </nav>
+
+      <header class="mt-6 border-t-[6px] border-black pt-3">
+        <p class={label}>AI engineering · A guided exploration</p>
+        <h1 class="mt-3 font-display text-4xl font-bold leading-[1.1] tracking-tight">{title}</h1>
+        <p class="mt-4 font-body text-lg leading-relaxed text-neutral-800">
+          Guess ahead. Check together. Commit only what the target allows.
+        </p>
+        <p class="mt-3 font-body leading-relaxed text-neutral-800">
+          Follow the original method through one complete round. Then explore how Medusa, EAGLE, and LayerSkip change
+          the drafter without making verification disappear.
+        </p>
+        <dl class="mt-5 grid grid-cols-[115px_minmax(0,1fr)] gap-x-3 gap-y-1 text-sm">
+          <dt class="font-display font-bold">Before reading</dt>
+          <dd>Know that a language model processes tokens and produces next-token scores. Basic causal attention is helpful.</dd>
+          <dt class="font-display font-bold">You will learn</dt>
+          <dd>Why verification can be parallel, how rejection works, where drafts come from, and when speculation is worth its cost.</dd>
+          <dt class="font-display font-bold">Scope</dt>
+          <dd>Original chain speculation, exact sampling, and three representative variants. Not an implementation runbook or exhaustive survey.</dd>
+          <dt class="font-display font-bold">How to read</dt>
+          <dd>Read the original flow first. Use the labs to inspect mechanisms; open the optional details when you want more depth.</dd>
+        </dl>
+      </header>
+
+      <nav class="mt-10 border-t border-black pt-4" aria-labelledby="contents-title">
+        <h2 id="contents-title" class={label}>Contents</h2>
+        <ol class="mt-3 grid gap-x-8 text-sm sm:grid-cols-2">
+          {
+            contents.map((c, i) => (
+              <li class="border-b border-neutral-300 py-1.5">
+                <a href={`#${c.id}`} class="underline underline-offset-4 hover:no-underline">
+                  <span class="font-label text-neutral-500">{i + 1}.</span> {c.label}
+                </a>
+              </li>
+            ))
+          }
+        </ol>
+      </nav>
+
+      <!-- Chapter 1 -->
+      <section id="problem" class="mt-12 border-t-[3px] border-black pt-4">
+        <p class={label}>Chapter 1</p>
+        <h2 class="mt-2 font-display text-3xl font-bold leading-tight">Why guess ahead?</h2>
+
+        <div class="mt-6 space-y-4 leading-relaxed text-neutral-800">
+          <p>
+            You ask a language model to continue a sentence. It chooses one token, feeds that token back, and chooses
+            another. That serial dependency is real: a different first token can change everything that follows.
+          </p>
+          <p>
+            Speculative decoding does not remove the dependency. It uses a cheaper mechanism to propose a continuation,
+            then asks the target model to check several positions together. If the guesses are good, one expensive
+            evaluation can advance the answer by several tokens.
+          </p>
+          <p>
+            The original method can use an existing smaller model as the drafter, without retraining or changing the
+            target model. The early papers by Leviathan, Kalman, and Matias and by Chen and colleagues explain how
+            verification and corrected sampling preserve the target distribution.{' '}
+            <a href="#sources" class={cite}>[1]</a> <a href="#sources" class={cite}>[2]</a>
+          </p>
+
+          <aside class="border border-l-[7px] border-black bg-white px-4 py-3">
+            <p class={boxTitle}>The key mental model</p>
+            <p class="mt-1">
+              Unknown future tokens must first be chosen. Candidate tokens are already known, so their conditional
+              predictions can be evaluated together. A guess is an input to a check, not an authorized output.
+            </p>
+          </aside>
+        </div>
+
+        <section class="mt-8 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">Four terms, four responsibilities</h3>
+          <dl class="space-y-3">
+            <div>
+              <dt class="font-display font-bold text-neutral-900">Target model</dt>
+              <dd class="mt-0.5">The model whose decoding behavior we want to preserve.</dd>
+            </div>
+            <div>
+              <dt class="font-display font-bold text-neutral-900">Drafter</dt>
+              <dd class="mt-0.5">A cheaper proposal mechanism. It can be a separate model, trained heads, or an early-exit path.</dd>
+            </div>
+            <div>
+              <dt class="font-display font-bold text-neutral-900">Drafting</dt>
+              <dd class="mt-0.5">The proposal stage only. A small autoregressive drafter may still generate its candidates sequentially.</dd>
+            </div>
+            <div>
+              <dt class="font-display font-bold text-neutral-900">Verification</dt>
+              <dd class="mt-0.5">Target evaluation of the proposed continuation, followed by an acceptance rule.</dd>
+            </div>
+          </dl>
+          <p>
+            We will first use greedy decoding, where the highest-scoring target token is chosen. Sampling comes later.
+            All sentence examples treat each displayed word as one token for clarity; real tokenization may split words
+            differently.
+          </p>
+        </section>
+      </section>
+
+      <!-- Chapter 2 -->
+      <section id="original" class="mt-12 border-t-[3px] border-black pt-4">
+        <p class={label}>Chapter 2</p>
+        <h2 class="mt-2 font-display text-3xl font-bold leading-tight">
+          Original method: a small model drafts, the target checks
+        </h2>
+
+        <div class="mt-6 space-y-4 leading-relaxed text-neutral-800">
+          <p>
+            Start with the committed context <strong>“The cat sat”</strong>. A smaller model proposes{' '}
+            <strong>“on the mat”</strong>. It is allowed to be wrong. The target model is still responsible for the
+            final continuation.
+          </p>
+        </div>
+
+        <section class="mt-8 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">What happens in one round?</h3>
+          <ol class="list-decimal space-y-2 pl-5">
+            <li>
+              <strong>Draft.</strong> The small model proposes a short chain and, for exact sampling, supplies its
+              proposal distributions.
+            </li>
+            <li>
+              <strong>Verify.</strong> The target evaluates the relevant positions together under causal visibility.
+            </li>
+            <li>
+              <strong>Accept or correct.</strong> For greedy decoding, keep the longest prefix that matches the
+              target's choices. At the first mismatch, emit the target's choice and discard the draft tail.
+            </li>
+            <li>
+              <strong>Continue.</strong> Retain or reconstruct state consistent with the committed sequence, then start
+              the next round.
+            </li>
+          </ol>
+          <p>
+            Try the middle mismatch first. Then switch to all-match and first-failure. The target predictions in the
+            lab are scripted examples, not outputs of an actual LLM.
+          </p>
+
+          <figure class="space-y-2">
+            <div id="original-lab" class="border border-neutral-400 bg-white">
+              <div class="border-b border-neutral-400 px-4 py-3">
+                <p class={boxTitle}>Lab 1 / Run a complete greedy round</p>
+                <p class="mt-1 font-display text-xs text-neutral-600">
+                  Interactive lesson · illustrative, not a running model
+                </p>
+              </div>
+              <OriginalRoundLab client:load />
+            </div>
+            <figcaption class="text-sm text-neutral-700">
+              <strong>How to read this lab.</strong> The draft is “on the mat.” In the middle-mismatch case, the target
+              agrees with “on” but predicts “a” instead of “the.” Commit “on a” and discard “the mat.” Later checks used
+              the rejected prefix and cannot be rescued. If all candidates match, a bonus target token can also be
+              emitted.
+            </figcaption>
+          </figure>
+        </section>
+
+        <section class="mt-10 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">Why the matching prefix matters</h3>
+          <p>
+            Suppose the target chooses “on,” then “a.” A later prediction after “on the” is no longer a prediction under
+            the actual context “on a.” Even if that later token happens to look useful, it cannot be kept on the basis
+            of that check.
+          </p>
+          <p>
+            If K candidates all match, the target's logits after the last candidate can provide one additional{' '}
+            <strong>bonus token</strong>. The classic round can therefore commit up to K + 1 tokens. Output limits and
+            stopping conditions can end the round earlier.{' '}
+            <a href="#sources" class={cite}>[1]</a> <a href="#sources" class={cite}>[2]</a>
+          </p>
+        </section>
+
+        <section class="mt-10 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">What does the drafter cost?</h3>
+          <p>
+            A separate draft model needs its own weights, execution, and state. A tiny drafter may be cheap but
+            inaccurate; a larger one may be accurate but too expensive. A suitable existing model can be used, or a
+            specialized drafter can be trained. The target need not be retrained in the original approach.
+          </p>
+          <p>
+            Compatible token handling is essential. The classic explanation assumes a shared token vocabulary.
+            Cross-tokenizer methods require additional machinery and are outside this lesson.
+          </p>
+        </section>
+      </section>
+
+      <!-- Chapter 3 -->
+      <section id="verify" class="mt-12 border-t-[3px] border-black pt-4">
+        <p class={label}>Chapter 3</p>
+        <h2 class="mt-2 font-display text-3xl font-bold leading-tight">How can verification be parallel?</h2>
+
+        <div class="mt-6 space-y-4 leading-relaxed text-neutral-800">
+          <p>
+            The candidates are available before verification begins. The target can evaluate several sequence positions
+            in one multi-position pass, rather than waiting for each next input to be discovered.
+          </p>
+
+          <div class="overflow-x-auto">
+            <table class="w-full min-w-[20rem] text-left text-sm">
+              <thead class="font-display text-xs uppercase tracking-wide">
+                <tr class="border-b border-black">
+                  <th scope="col" class="py-2 pr-4 font-bold">Candidate being checked</th>
+                  <th scope="col" class="py-2 font-bold">Target prediction conditioned on</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="border-b border-neutral-400">
+                  <td class="py-2 pr-4 font-label">on</td>
+                  <td class="py-2">The cat sat</td>
+                </tr>
+                <tr class="border-b border-neutral-400">
+                  <td class="py-2 pr-4 font-label">the</td>
+                  <td class="py-2">The cat sat on</td>
+                </tr>
+                <tr class="border-b border-neutral-400">
+                  <td class="py-2 pr-4 font-label">mat</td>
+                  <td class="py-2">The cat sat on the</td>
+                </tr>
+                <tr>
+                  <td class="py-2 pr-4 font-display font-bold">Bonus token</td>
+                  <td class="py-2">The cat sat on the mat</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            The causal mask prevents a position from seeing future candidates. Processing “on” produces logits for what
+            comes <em>after</em> “on”; it does not prove that “on” itself was correct. The preceding position's logits
+            perform that check.
+          </p>
+
+          <aside class="border border-l-[7px] border-black bg-white px-4 py-3">
+            <p class={boxTitle}>One-position shift</p>
+            <p class="mt-1">
+              Logits after “sat” check “on.” Logits after “on” check “the.” Logits after “the” check “mat.” Parallel
+              scoring does not mean each candidate sees the whole proposed future.
+            </p>
+          </aside>
+
+          <p>
+            If logits after the last committed token are already available, they can check the first candidate.
+            Otherwise the engine evaluates the appropriate preceding position as part of the pass. Exact input-buffer
+            layout depends on the driver and cache. The conditional predictions above are the invariant.{' '}
+            <a href="#sources" class={cite}>[1]</a> <a href="#sources" class={cite}>[2]</a>
+          </p>
+        </div>
+
+        <section class="mt-10 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">State must follow the accepted answer</h3>
+          <p>
+            Verification can temporarily compute state for rejected positions. That tail must not become remembered
+            context. Standard KV caches can retain the accepted prefix and invalidate the rest. Other architectures may
+            require snapshots or replay. A correction token must be processed before later predictions can depend on it.
+          </p>
+          <p>
+            Thus selecting, emitting, and processing a token are distinct events. “Parallel verification” refers to
+            evaluation across candidate positions, not parallel execution of every layer or independent generation of
+            the final answer.
+          </p>
+        </section>
+      </section>
+
+      <!-- Chapter 4 -->
+      <section id="sampling" class="mt-12 border-t-[3px] border-black pt-4">
+        <p class={label}>Chapter 4</p>
+        <h2 class="mt-2 font-display text-3xl font-bold leading-tight">
+          Sampling needs a different acceptance rule
+        </h2>
+
+        <div class="mt-6 space-y-4 leading-relaxed text-neutral-800">
+          <p>
+            Greedy verification checks whether a candidate equals the target's highest-scoring token. For stochastic
+            sampling, simply comparing independently sampled tokens is not the original exact algorithm.
+          </p>
+          <p>
+            Let <strong>p(x)</strong> be the target probability and <strong>q(x)</strong> the draft probability for the
+            same position and prefix. A candidate drawn from q is accepted with probability:
+          </p>
+          <p class={formula}>min(1, p(x) / q(x))</p>
+          <p>If rejected, draw a correction from the normalized positive residual:</p>
+          <p class={formula}>r(x) = max(0, p(x) − q(x)) / Σ<sub>y</sub> max(0, p(y) − q(y))</p>
+          <p>
+            The correction compensates for probability mass that the draft overproduced. It is not an arbitrary
+            fallback. The original papers prove distribution preservation under the algorithm's assumptions. Define p
+            and q after the intended sampling transformations.{' '}
+            <a href="#sources" class={cite}>[1]</a> <a href="#sources" class={cite}>[2]</a>
+          </p>
+
+          <figure class="space-y-2">
+            <div id="sampling-lab" class="border border-neutral-400 bg-white">
+              <div class="border-b border-neutral-400 px-4 py-3">
+                <p class={boxTitle}>Lab 2 / Keep the target distribution</p>
+                <p class="mt-1 font-display text-xs text-neutral-600">
+                  Interactive lesson · illustrative, not a running model
+                </p>
+              </div>
+              <SamplingLab client:load />
+            </div>
+            <figcaption class="text-sm text-neutral-700">
+              <strong>How to read this lab.</strong> With target A=60% and draft A=80%, accept a draft A with
+              probability 75%. Draft B is always accepted. Rejected A is corrected to B. The final output distribution
+              is A=60%, B=40%. These bars are exact calculations for a hypothetical two-token vocabulary, not a random
+              simulation.
+            </figcaption>
+          </figure>
+
+          <details class="border border-neutral-400 bg-neutral-100 px-4 py-3">
+            <summary class={questionCls}>What if p and q are equal?</summary>
+            <p class="mt-2">
+              Every proposal is accepted. The residual has zero mass, but no rejection occurs, so it does not need to
+              be sampled. The lab handles this case explicitly.
+            </p>
+          </details>
+
+          <aside class="border border-dashed border-neutral-600 px-4 py-3">
+            <p class={boxTitle}>Exact distribution is not identical text for the same seed</p>
+            <p class="mt-1">
+              Random numbers may be consumed differently, so distribution equality does not imply seed-by-seed output
+              equality. Greedy equality also assumes the same target arithmetic, settings, and tie-breaking. A relaxed
+              acceptance rule needs a separate quality claim.
+            </p>
+          </aside>
+        </div>
+      </section>
+
+      <!-- Chapter 5 -->
+      <section id="medusa" class="mt-12 border-t-[3px] border-black pt-4">
+        <p class={label}>Chapter 5</p>
+        <h2 class="mt-2 font-display text-3xl font-bold leading-tight">
+          Medusa: predict future positions with extra heads
+        </h2>
+
+        <div class="mt-6 space-y-4 leading-relaxed text-neutral-800">
+          <p>
+            The original method must find and serve a suitable smaller model. Medusa changes the proposal mechanism:
+            attach additional decoding heads to the target's final hidden representations.
+          </p>
+          <p>
+            A <strong>hidden representation</strong> is a numerical vector produced inside the model. A{' '}
+            <strong>head</strong> maps that representation into predictions. The ordinary LM head predicts the next
+            token. Medusa's extra heads predict positions farther ahead from the same representation; one head does not
+            simply consume the previous head's chosen token.{' '}
+            <a href="#sources" class={cite}>[3, section 2.1]</a>
+          </p>
+        </div>
+
+        <section class="mt-8 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">One round</h3>
+          <ol class="list-decimal space-y-2 pl-5">
+            <li>Obtain the target's hidden representation at the current boundary.</li>
+            <li>The LM head and extra heads produce candidate distributions for their designated future positions.</li>
+            <li>Take selected top candidates and arrange possible continuations as a tree.</li>
+            <li>The target evaluates tree positions together using a branch-aware attention mask and matching position indices.</li>
+            <li>Apply the chosen acceptance policy, commit a continuation, and use accepted target representations for the next round.</li>
+          </ol>
+          <p>
+            A tree shares prefixes across alternatives. A node may attend to its ancestors and the committed context,
+            but not to another branch. More branches offer more chances of a useful continuation and also create more
+            verification work.
+          </p>
+
+          <figure class="space-y-2">
+            <div id="medusa-lab" class="border border-neutral-400 bg-white">
+              <div class="border-b border-neutral-400 px-4 py-3">
+                <p class={boxTitle}>Lab 3 / Inspect a candidate tree</p>
+                <p class="mt-1 font-display text-xs text-neutral-600">
+                  Interactive lesson · illustrative, not a running model
+                </p>
+              </div>
+              <MedusaTreeLab client:load />
+            </div>
+            <figcaption class="text-sm text-neutral-700">
+              <strong>How to read this lab.</strong> The LM head supplies “sat.” Additional heads propose
+              future-position candidates from the same hidden representation. Nodes see the committed prefix and their
+              ancestors, not sibling branches. In this scripted greedy case the target path is “sat on a”; “near” and
+              “the” branches are rejected. The widget teaches tree visibility and greedy selection, not Medusa's
+              typical-acceptance policy.
+            </figcaption>
+          </figure>
+        </section>
+
+        <section class="mt-10 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">Two training strategies</h3>
+          <p>
+            <strong>Medusa-1</strong> freezes the backbone and trains the additional heads. <strong>Medusa-2</strong>{' '}
+            trains heads and backbone together, with a training recipe intended to preserve the backbone's next-token
+            capability. Training the backbone changes which target is being accelerated; do not compare it as if the
+            original weights were untouched. <a href="#sources" class={cite}>[3, section 2.2]</a>
+          </p>
+        </section>
+
+        <section class="mt-10 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">Acceptance is a separate choice</h3>
+          <p>
+            The paper discusses rejection sampling and <strong>typical acceptance</strong>. Typical acceptance keeps
+            candidates whose target probability exceeds a threshold related to probability and entropy, rather than
+            requiring the exact original sampling distribution. It seeks similar quality with more acceptance; it is not
+            the same guarantee as exact speculative sampling. The widget deliberately uses a simple greedy rule so the
+            tree mechanics stay clear. <a href="#sources" class={cite}>[3, section 2.3]</a>
+          </p>
+
+          <aside class="border border-l-[7px] border-black bg-white px-4 py-3">
+            <p class={boxTitle}>What changed? What stayed?</p>
+            <p class="mt-1">
+              Changed: proposal generation uses trained heads and a candidate tree. Stayed: the target evaluates
+              continuations, and rejected branches cannot become committed state. The acceptance policy determines the
+              guarantee.
+            </p>
+          </aside>
+
+          <p>
+            Use this approach when trained heads and tree-verification support are available. Its advantages are shared
+            target representations and no standalone small-model backbone. Its costs include head training, additional
+            parameters, and potentially large candidate trees.
+          </p>
+        </section>
+      </section>
+
+      <!-- Chapter 6 -->
+      <section id="eagle" class="mt-12 border-t-[3px] border-black pt-4">
+        <p class={label}>Chapter 6</p>
+        <h2 class="mt-2 font-display text-3xl font-bold leading-tight">
+          EAGLE: predict features with the selected token in view
+        </h2>
+
+        <div class="mt-6 space-y-4 leading-relaxed text-neutral-800">
+          <p>
+            EAGLE changes what the drafter predicts. Instead of reproducing a complete small language model, it learns
+            to predict target <strong>features</strong>: hidden representations before the LM head. The original EAGLE
+            paper combines a feature sequence with a token sequence shifted one step ahead. This section covers that
+            original design, not every later EAGLE version. <a href="#sources" class={cite}>[4]</a>
+          </p>
+        </div>
+
+        <section class="mt-8 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">Why feature-only prediction is ambiguous</h3>
+          <p>
+            After “I,” the target may select “am” or “always.” Those choices create different next representations. The
+            feature after “I” alone does not specify which branch was selected. EAGLE gives the draft component the
+            selected next token, so it predicts the feature for that particular continuation.
+          </p>
+          <p>
+            For example: the target feature after “I” plus the selected token “am” helps predict a feature after “I am.”
+            Passing that predicted feature through the target LM head proposes the following token, such as “ready.” The
+            drafter can then use its predicted feature and proposed token to continue.
+          </p>
+
+          <figure class="space-y-2">
+            <div id="eagle-lab" class="border border-neutral-400 bg-white">
+              <div class="border-b border-neutral-400 px-4 py-3">
+                <p class={boxTitle}>Lab 4 / Follow a feature-based draft</p>
+                <p class="mt-1 font-display text-xs text-neutral-600">
+                  Interactive lesson · illustrative, not a running model
+                </p>
+              </div>
+              <EagleFeatureLab client:load />
+            </div>
+            <figcaption class="text-sm text-neutral-700">
+              <strong>How to read this lab.</strong> The feature after “I” alone does not identify the next feature:
+              choosing “am” and choosing “always” lead to different contexts. EAGLE conditions feature prediction on the
+              selected next token as well. Its predicted feature is passed through the target LM head to propose a later
+              token. The symbolic features are explanatory labels, not real model vectors. This widget follows one
+              branch; the original method can draft a tree.
+            </figcaption>
+          </figure>
+        </section>
+
+        <section class="mt-10 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">One round in the original method</h3>
+          <ol class="list-decimal space-y-2 pl-5">
+            <li>Collect target features for the current accepted sequence.</li>
+            <li>Embed the one-step-ahead tokens and combine them with the feature sequence.</li>
+            <li>A trained autoregression component predicts the next feature.</li>
+            <li>The target's LM head maps that predicted feature into a token distribution.</li>
+            <li>Repeat cheap drafting, potentially expanding a candidate tree.</li>
+            <li>The target verifies the tree and applies the speculative sampling rule. Accepted tokens and actual target features seed the next round.</li>
+          </ol>
+          <p>
+            The original draft component uses a projection and a decoder layer. The target embedding and LM head are
+            reused rather than newly trained; the target backbone remains fixed. Training uses feature regression and a
+            token-distribution objective, with noise augmentation to reduce sensitivity to accumulated feature errors.{' '}
+            <a href="#sources" class={cite}>[4, section 3]</a>
+          </p>
+        </section>
+
+        <section class="mt-10 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">Guarantee and trade-off</h3>
+          <p>
+            Feature predictions may be inaccurate. Exactness comes from target verification and the
+            acceptance/correction algorithm, not from perfect feature prediction. The original method uses tree
+            verification with speculative sampling to preserve the target distribution.{' '}
+            <a href="#sources" class={cite}>[4, section 3.3]</a>
+          </p>
+
+          <aside class="border border-l-[7px] border-black bg-white px-4 py-3">
+            <p class={boxTitle}>What changed? What stayed?</p>
+            <p class="mt-1">
+              Changed: the drafter predicts target-like features conditioned on shifted token information. Stayed:
+              candidates are provisional, the target verifies them, and the exact acceptance rule protects the target
+              distribution.
+            </p>
+          </aside>
+
+          <p>
+            This requires a trained component matched to the target and an engine able to expose and reuse the relevant
+            representations. It is not a generic plugin for any checkpoint without preparation. Feature error can
+            accumulate across draft steps, so cheapness and acceptance still need measurement.
+          </p>
+        </section>
+      </section>
+
+      <!-- Chapter 7 -->
+      <section id="layerskip" class="mt-12 border-t-[3px] border-black pt-4">
+        <p class={label}>Chapter 7</p>
+        <h2 class="mt-2 font-display text-3xl font-bold leading-tight">
+          LayerSkip: use early layers as the drafter
+        </h2>
+
+        <div class="mt-6 space-y-4 leading-relaxed text-neutral-800">
+          <p>
+            LayerSkip uses one model at two depths. The early layers propose tokens, and the remaining layers verify
+            those proposals. It avoids a separate draft model and can reuse early-layer computation.
+          </p>
+          <p>
+            An <strong>early exit</strong> reads a prediction before the final layer. Ordinary models are not
+            necessarily trained to make useful predictions at every early layer. LayerSkip addresses this with layer
+            dropout and an early-exit loss using a shared LM head. Later layers are dropped more often during training,
+            encouraging earlier layers to become useful predictors.{' '}
+            <a href="#sources" class={cite}>[5, section 4.1]</a>
+          </p>
+        </div>
+
+        <section class="mt-8 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">One round</h3>
+          <ol class="list-decimal space-y-2 pl-5">
+            <li>Choose an exit layer in a suitably trained model.</li>
+            <li>Run the early layers autoregressively to propose several tokens.</li>
+            <li>Retain their boundary activations and early-layer cache.</li>
+            <li>Run the remaining layers on those positions together to obtain full-depth target predictions.</li>
+            <li>Accept or correct, then repair the cache to match the committed continuation.</li>
+          </ol>
+
+          <figure class="space-y-2">
+            <div id="layer-lab" class="border border-neutral-400 bg-white">
+              <div class="border-b border-neutral-400 px-4 py-3">
+                <p class={boxTitle}>Lab 5 / Choose an early exit</p>
+                <p class="mt-1 font-display text-xs text-neutral-600">
+                  Interactive lesson · illustrative, not a running model
+                </p>
+              </div>
+              <LayerSkipLab client:load />
+            </div>
+            <figcaption class="text-sm text-neutral-700">
+              <strong>How to read this lab.</strong> This conceptual model has 12 layers. Exiting after layer 4 uses
+              layers 1–4 for cheap drafting. Verification continues stored boundary activations through layers 5–12 for
+              multiple candidate positions. Moving the split changes the division of work; it does not supply a measured
+              speedup or acceptance rate. A LayerSkip-trained checkpoint is required for the intended early-exit
+              behavior.
+            </figcaption>
+          </figure>
+        </section>
+
+        <section class="mt-10 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">Why computation can be shared</h3>
+          <p>
+            The verification path uses the same early layers in the same order as the draft path. Their results need not
+            be discarded and recomputed from scratch. The paper's self-verification stage continues from retained
+            activations through the later layers. Its cache handling keeps the accepted prefix and rolls back rejected
+            work. <a href="#sources" class={cite}>[5, sections 4.3.1–4.3.3]</a>
+          </p>
+        </section>
+
+        <section class="mt-10 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">Early exit alone is not self-speculative decoding</h3>
+          <p>
+            If you simply stop at an early layer and output its token, you can change the model's behavior.
+            Self-speculation adds full-depth verification and correction. The relevant target is the full-depth version
+            of the trained checkpoint, not an unrelated pre-training checkpoint.
+          </p>
+
+          <aside class="border border-l-[7px] border-black bg-white px-4 py-3">
+            <p class={boxTitle}>What changed? What stayed?</p>
+            <p class="mt-1">
+              Changed: the draft and target share one backbone, split by depth, with reusable activations. Stayed: the
+              full-depth target verifies the proposed continuation, and rejected state must be repaired.
+            </p>
+          </aside>
+
+          <p>
+            An earlier exit can make drafting cheaper but less accurate; a later exit can improve proposals but spend
+            more work before verification. The optimum depends on the trained model, workload, hardware, and draft
+            length. The widget shows the split only, not a fabricated accuracy curve.
+          </p>
+        </section>
+      </section>
+
+      <!-- Chapter 8 -->
+      <section id="performance" class="mt-12 border-t-[3px] border-black pt-4">
+        <p class={label}>Chapter 8</p>
+        <h2 class="mt-2 font-display text-3xl font-bold leading-tight">
+          Choose a method by cost, not by its name
+        </h2>
+
+        <div class="mt-6 space-y-4 leading-relaxed text-neutral-800">
+          <p>
+            Speculation may do more arithmetic yet finish sooner by reducing expensive serial target calls. This is
+            especially plausible when short-batch target decode is constrained by data movement and a short
+            multi-position verification pass can reuse weights effectively. It is not a universal property of every
+            workload. <a href="#sources" class={cite}>[1]</a> <a href="#sources" class={cite}>[2]</a>
+          </p>
+          <p>
+            Acceptance rate alone is not enough. You need draft cost, verification cost, state handling, and useful
+            committed tokens. Tree methods also propose alternatives that cannot all be accepted, so their raw
+            accepted/drafted ratio is not directly comparable with a chain ratio.
+          </p>
+
+          <figure class="space-y-2">
+            <div id="performance-lab" class="border border-neutral-400 bg-white">
+              <div class="border-b border-neutral-400 px-4 py-3">
+                <p class={boxTitle}>Lab 6 / Does the extra work pay off?</p>
+                <p class="mt-1 font-display text-xs text-neutral-600">
+                  Interactive lesson · illustrative, not a running model
+                </p>
+              </div>
+              <PerformanceLab client:load />
+            </div>
+            <figcaption class="text-sm text-neutral-700">
+              <strong>How to read this lab.</strong> All timings are hypothetical inputs. A round costing 18 ms that
+              commits four tokens averages 4.5 ms per token, compared with 10 ms ordinary decode. If it commits only
+              one, it loses. This simplified calculation excludes prefill, queueing, and variable round costs; it is not
+              a hardware forecast.
+            </figcaption>
+          </figure>
+
+          <div class="overflow-x-auto">
+            <table class="w-full min-w-[32rem] text-left text-sm">
+              <thead class="font-display text-xs uppercase tracking-wide">
+                <tr class="border-b border-black">
+                  <th scope="col" class="py-2 pr-3 font-bold">Method</th>
+                  <th scope="col" class="py-2 pr-3 font-bold">Proposal source</th>
+                  <th scope="col" class="py-2 pr-3 font-bold">Preparation</th>
+                  <th scope="col" class="py-2 font-bold">Main practical cost</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="border-b border-neutral-400">
+                  <td class="py-2 pr-3 font-display font-bold">Original</td>
+                  <td class="py-2 pr-3">Separate small model</td>
+                  <td class="py-2 pr-3">Compatible existing or trained drafter</td>
+                  <td class="py-2">Extra model weights, state, and draft execution</td>
+                </tr>
+                <tr class="border-b border-neutral-400">
+                  <td class="py-2 pr-3 font-display font-bold">Medusa</td>
+                  <td class="py-2 pr-3">Future-position heads</td>
+                  <td class="py-2 pr-3">Head training; optionally joint backbone training</td>
+                  <td class="py-2">Heads and candidate-tree verification</td>
+                </tr>
+                <tr class="border-b border-neutral-400">
+                  <td class="py-2 pr-3 font-display font-bold">Original EAGLE</td>
+                  <td class="py-2 pr-3">Feature predictor plus shifted tokens</td>
+                  <td class="py-2 pr-3">Target-specific draft training</td>
+                  <td class="py-2">Feature integration and tree/state management</td>
+                </tr>
+                <tr>
+                  <td class="py-2 pr-3 font-display font-bold">LayerSkip</td>
+                  <td class="py-2 pr-3">Early layers of the same model</td>
+                  <td class="py-2 pr-3">Early-exit training recipe</td>
+                  <td class="py-2">Split-depth execution and cache repair</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            Longer drafts can increase useful accepted tokens and wasted tail work. More concurrency can reduce the
+            spare compute that made speculation attractive. Streaming may become burstier because several tokens are
+            committed after one check. Decode speedup does not automatically improve end-to-end first-token time.
+          </p>
+        </div>
+
+        <section class="mt-10 space-y-4 leading-relaxed text-neutral-800">
+          <h3 class="font-display text-xl font-bold">A fair inference-engine experiment</h3>
+          <p>
+            Hold target checkpoint, backend, precision, prompts, output limits, sampling, cache conditions, and
+            concurrency comparable. Record actual output length, client latency, failures, memory, draft/verify costs,
+            and committed tokens per round. For a changed backbone, say explicitly that the target changed. Check output
+            consistency under the promised acceptance policy.
+          </p>
+          <p>
+            Do not assume all four methods are supported by a given engine. A checkpoint needs the appropriate trained
+            components and the engine needs the matching execution path. MTP is a training or prediction capability, not
+            a synonym for one universal speculative algorithm.
+          </p>
+        </section>
+      </section>
+
+      <!-- Chapter 9 -->
+      <section id="recap" class="mt-12 border-t-[3px] border-black pt-4">
+        <p class={label}>Chapter 9</p>
+        <h2 class="mt-2 font-display text-3xl font-bold leading-tight">Teach back the whole mechanism</h2>
+
+        <div class="mt-6 space-y-4 leading-relaxed text-neutral-800">
+          <p>
+            A good drafter is cheap and often useful, not authoritative. Verification evaluates conditional predictions
+            under candidate prefixes. Acceptance selects a valid continuation, and state repair ensures the next round
+            starts from that continuation.
+          </p>
+
+          <ol class="list-decimal space-y-2 pl-5">
+            <li>Why can candidate positions be checked together?</li>
+            <li>Why can a matching token after the first rejection not be kept?</li>
+            <li>What changes between Medusa heads and original EAGLE's draft component?</li>
+            <li>Why does LayerSkip need special training?</li>
+            <li>What does exact sampling guarantee, and what does it not guarantee?</li>
+          </ol>
+
+          <details class="border border-neutral-400 bg-neutral-100 px-4 py-3">
+            <summary class={questionCls}>Read the answer key</summary>
+            <ol class="mt-3 list-decimal space-y-2 pl-5">
+              <li>
+                The candidate inputs are already known. Causal evaluation can score their conditional predictions
+                together without choosing unknown inputs first.
+              </li>
+              <li>Its check used a rejected prefix. The corrected prefix may give a different prediction.</li>
+              <li>
+                Medusa heads predict future-position tokens from shared target representations. Original EAGLE predicts
+                features conditioned on shifted token information, then uses the LM head to propose tokens.
+              </li>
+              <li>
+                Early layers and the shared head need to make useful early predictions. Ordinary final-layer training
+                does not ensure that.
+              </li>
+              <li>
+                It preserves the target distribution under the algorithm's assumptions. It does not imply identical text
+                for the same seed, universal speedup, or exactness for relaxed acceptance policies.
+              </li>
+            </ol>
+          </details>
+
+          <aside class="border border-l-[7px] border-black bg-white px-4 py-3">
+            <p class={boxTitle}>The lasting takeaway</p>
+            <p class="mt-1">
+              Speculative decoding prepares a possible future so the target can check it efficiently. Parallel
+              computation and sequential acceptance cooperate; neither turns the guesses into independent final answers.
+            </p>
+          </aside>
+        </div>
+      </section>
+
+      <p class="mt-12 border-t border-black pt-4 text-sm italic text-neutral-700">
+        Read the original algorithm first, then the method whose proposal mechanism interests you. This guide describes
+        the cited versions, not a complete or current survey of every speculative-decoding variant. All token examples,
+        target choices, feature symbols, layer counts in widgets, and timing inputs are illustrative. The widgets do not
+        execute an LLM, reproduce training, or report benchmark results. Their static captions preserve the lesson
+        without JavaScript.
+      </p>
+
+      <div id="sources" class="mt-8">
+        <Sources items={sources} heading="Sources and reading paths" />
+      </div>
+    </main>
+  </body>
+</html>
